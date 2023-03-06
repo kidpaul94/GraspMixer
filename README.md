@@ -35,7 +35,7 @@ Contact point pair estimator (CPPE) for 6DOF grasp detection. The framework take
     ├── gripper_config.py 
     └── quality.py        
 
-## Download Process:
+## Download Process
 
     git clone https://github.com/kidpaul94/CPPE.git
     cd CPPE/
@@ -46,21 +46,21 @@ Contact point pair estimator (CPPE) for 6DOF grasp detection. The framework take
 ### CPPE_v2:
 
 > **Note**
-CPPE_v2.py receives several different arguments. Run the --help command to see everything it receives.
+`CPPE_v2.py` receives several different arguments. Run the `--help` command to see everything it receives.
 
     python3 CPPE_v2.py --help
 
 ### Extra Processing:
 
 > **Note**
-helper.py receives several different arguments to convert a CAD model to a point cloud or visualize grasp configurations. Run the --help command to see everything it receives.
+`helper.py` receives several different arguments to convert a CAD model to a point cloud or visualize grasp configurations. Run the `--help` command to see everything it receives.
 
     python3 helper.py --help
 
 ### Quality Estimation:
 
 > **Note**
-train.py receives several different arguments. Run the --help command to see everything it receives.
+`traib.py` receives several different arguments. Run the `--help` command to see everything it receives.
 
     cd ML_modules/
     python3 train.py --help
