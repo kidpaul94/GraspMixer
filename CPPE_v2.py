@@ -1,5 +1,6 @@
 import os
 import time
+import math
 import copy
 import argparse
 import numpy as np
@@ -180,13 +181,20 @@ class Gripper():
         for vector in approach_vectors:
             pts = np.asarray(gripper.get_box_points())
             vertex = pts[3,:] - pts[0,:]
-            unit_vertex = vertex / np.linalg.norm(vertex)
-            unit_vector = vector / np.linalg.norm(vector)
+            norm_vertex = np.linalg.norm(vertex)
 
-            dot = np.dot(unit_vertex, unit_vector)
+            dot = np.dot(vertex / norm_vertex, vector)             
             angle = np.arccos(np.clip(dot,-1,1))
-
             RM = R.from_rotvec(angle * d_vector).as_matrix()
+
+            temp = copy.deepcopy(gripper)
+            temp.rotate(R=RM, center=center)
+            temp_pts = np.asarray(temp.get_box_points())
+            temp_vertex = (temp_pts[3,:] - temp_pts[0,:]) / norm_vertex
+            temp_dot = np.dot(temp_vertex, vector)
+            
+            if not math.isclose(temp_dot, 1., rel_tol= 1e-5):
+                RM = R.from_rotvec((2 * np.pi - angle) * d_vector).as_matrix()    
             gripper.rotate(R=RM, center=center)
             collision.rotate(R=RM, center=center)
 
@@ -196,7 +204,7 @@ class Gripper():
             ext_3 = finger_2.get_point_indices_within_bounding_box(self.pcd.points)
 
             if len(ext_1) + len(ext_2) + len(ext_3) < threshold:        
-                res.append(unit_vector)
+                res.append(vector)
 
         return res
 
@@ -605,7 +613,7 @@ if __name__ == "__main__":
         output.write(repr(grasp_dict))
         output.close()
 
-    with open(f'{directory}/{filename}_aprv.txt', 'w') as output:
+    with open(f'{directory}/{filename}_aprvs.txt', 'w') as output:
         print(f'Generate {filename} approach_vectors dictionaries...')
         output.write(repr(approach_vectors))
         output.close()

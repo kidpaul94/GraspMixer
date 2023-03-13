@@ -13,7 +13,7 @@ def parse_args(argv=None) -> None:
                         help='path of an object we wish to evaluate.')
     parser.add_argument('--num_pts', default=4096, type=int,
                         help='number of points in the .pcd file.')
-    parser.add_argument('--dict_path', default='./objects/dicts/4096_obj_05/4096_obj_05.txt', type=str,
+    parser.add_argument('--dict_path', default='./objects/dicts/4096_obj_05/4096_obj_05_cpps.txt', type=str,
                         help='path of a grasp dictionary.')
     parser.add_argument('--idx', default=None, type=int,
                         help='number of visualized grasps in a grasp dictionary')
