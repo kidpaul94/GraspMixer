@@ -204,7 +204,7 @@ class Gripper():
             ext_3 = finger_2.get_point_indices_within_bounding_box(self.pcd.points)
 
             if len(ext_1) + len(ext_2) + len(ext_3) < threshold:        
-                res.append(vector)
+                res.append(vector.tolist())
 
         return res
 
