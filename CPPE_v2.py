@@ -516,10 +516,10 @@ def parse_args(argv = None) -> None:
     parser.add_argument('--CoM', default=[0., 0., 0.], type=float, nargs='+',
                         help='object center of mass.')
     parser.add_argument('--clustering', default='v2s', type=str,
-                        help='clustering algorithm: v2s, v2sm,  kmean, kmedoid.')
-    parser.add_argument('--k_dist', default=10., type=float,
+                        help='clustering algorithm: v2s, v2sm, kmean, kmedoid.')
+    parser.add_argument('--k_dist', default=20., type=float,
                         help='value that controls the number of dist_clusters.')
-    parser.add_argument('--k_rot', default=0.1745, type=float,
+    parser.add_argument('--k_rot', default=0.3491, type=float,
                         help='value that controls the number of rot_clusters.')
     parser.add_argument('--side', default=12, type=int,
                         help='value to discretize a full rotation along a rotation vector.')
