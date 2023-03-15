@@ -191,7 +191,7 @@ class Visualization():
             
         Returns
         -------
-        list2vis : obj : 'list' 
+        list2vis : 1XM : obj : `list` 
             list of objects that will be visualized
         """
         list2vis = []
@@ -234,7 +234,7 @@ class Visualization():
             
         Returns
         -------
-        list2vis : obj : 'list' 
+        list2vis : 1XN : obj : `list` 
             list of objects that will be visualized
         """
         with open(path_dict) as f:
