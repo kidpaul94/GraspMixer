@@ -33,6 +33,7 @@ Contact point pair estimator (CPPE) for 6DOF grasp detection. The framework take
     ├── CPPE_utils.py     
     ├── CPPE_v2.py        
     ├── gripper_config.py 
+    ├── helper.py 
     └── quality.py        
 
 ## Download Process
