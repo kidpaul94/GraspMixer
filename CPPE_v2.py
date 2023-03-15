@@ -170,7 +170,7 @@ class Gripper():
 
         Returns
         -------
-        res : list
+        res : 1XN : obj : `list`
             Possible approach vectors of a gripper without collisions
         """
         d_vector = self.p2_p1 / self.dist
