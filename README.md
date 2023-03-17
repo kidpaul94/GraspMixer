@@ -17,6 +17,7 @@ Contact point pair estimator (CPPE) for 6DOF grasp detection. The framework take
 ---
 
 ## Repository Structure
+
     ├── ML_modules        # DL modules 
     │   ├── engine.py
     │   ├── eval.py
@@ -67,5 +68,6 @@ Contact point pair estimator (CPPE) for 6DOF grasp detection. The framework take
     python3 train.py --help
 
 ## ToDo Lists
+
 | **Work on ML pipeline** | ![Progress](https://progress-bar.dev/50) |
 | --- | --- |
