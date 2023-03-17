@@ -22,6 +22,22 @@ def parse_args(argv=None) -> None:
     args = parser.parse_args(argv)
 
 def visualize_result(path: str, path_dict: str = None, idx: int = None) -> None:
+    """
+    Visualize results in various formats (e.g., grasp center, cpp, and full gripper config).
+
+    Parameters
+    ----------
+    path : str
+        path of an object we wish to evaluate
+    path_dict : str
+        path of a grasp dictionary
+    idx : int
+        number of visualized grasps in a grasp dictionary
+
+    Returns
+    -------
+    None
+    """
     pcd = o3d.io.read_point_cloud(path)
     frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=10, origin=[0, 0, 0])
     list2vis = [pcd, frame]
