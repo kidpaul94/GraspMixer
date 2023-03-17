@@ -10,7 +10,7 @@ from multiprocessing import Process, Lock, Manager
 
 from quality import GraspMetrics
 from gripper_config import params
-from CPPE_utils import rot_matrix, unpacking, get_sides, OtherCS
+from CPPE_utils import rot_matrix, unpacking, OtherCS
 
 class Gripper():
     def __init__(self, p1: np.ndarray, p2: np.ndarray, p2_p1: np.ndarray, dist: np.float64, pcd = None) -> None:
@@ -109,7 +109,7 @@ class Gripper():
         return len(ext) == len(org), org, center
     
     @staticmethod
-    def finger_model(gripper, collision, approach: np.ndarray):
+    def finger_model(gripper, collision, approach: np.ndarray, switch: bool):
         """ 
         Generate collision models of gripper fingers.
 
@@ -123,6 +123,8 @@ class Gripper():
             radius (mm & m), thickness (mm), and length of the fingers to use
         approach : 3x1 : obj : `numpy.ndarray`
             approach vector of a gripper
+        switch : bool
+            switch to adjust bounding box indicies
 
         Returns
         -------
@@ -144,10 +146,16 @@ class Gripper():
         pts_3 = np.asarray(gripper_t.get_box_points())
         pts_4 = np.asarray(collision_t.get_box_points())
 
-        group_1 = np.asarray([pts_1[3,:], pts_1[5,:], pts_2[3,:], pts_2[5,:], 
-                                pts_3[3,:], pts_3[5,:], pts_4[3,:], pts_4[5,:]])
-        group_2 = np.asarray([pts_1[6,:], pts_1[4,:], pts_2[6,:], pts_2[4,:], 
-                                pts_3[6,:], pts_3[4,:], pts_4[6,:], pts_4[4,:]])
+        if switch:
+            group_1 = np.asarray([pts_1[3,:], pts_1[5,:], pts_2[3,:], pts_2[5,:], 
+                                    pts_3[3,:], pts_3[5,:], pts_4[3,:], pts_4[5,:]])
+            group_2 = np.asarray([pts_1[4,:], pts_1[6,:], pts_2[4,:], pts_2[6,:], 
+                                    pts_3[4,:], pts_3[6,:], pts_4[4,:], pts_4[6,:]])
+        else:
+            group_1 = np.asarray([pts_1[1,:], pts_1[7,:], pts_2[0,:], pts_2[2,:], 
+                                    pts_3[1,:], pts_3[7,:], pts_4[0,:], pts_4[2,:]])
+            group_2 = np.asarray([pts_1[4,:], pts_1[6,:], pts_2[1,:], pts_2[7,:], 
+                                    pts_3[4,:], pts_3[6,:], pts_4[1,:], pts_4[7,:]])
         box_1 = o3d.utility.Vector3dVector(group_1)
         finger_1 = o3d.geometry.OrientedBoundingBox.create_from_points(points=box_1)
         box_2 = o3d.utility.Vector3dVector(group_2)
@@ -175,30 +183,21 @@ class Gripper():
         """
         d_vector = self.p2_p1 / self.dist
         gripper, collision, center = self.gripper_localizer()
-        approach_vectors = get_sides(f_vector=d_vector, sides=side, full=False) 
+        RM = R.from_rotvec(2 * np.pi / side * d_vector).as_matrix() 
         res = []
-
-        for vector in approach_vectors:
-            pts = np.asarray(gripper.get_box_points())
-            vertex = pts[3,:] - pts[0,:]
-            norm_vertex = np.linalg.norm(vertex)
-
-            dot = np.dot(vertex / norm_vertex, vector)             
-            angle = np.arccos(np.clip(dot,-1,1))
-            RM = R.from_rotvec(angle * d_vector).as_matrix()
-
-            temp = copy.deepcopy(gripper)
-            temp.rotate(R=RM, center=center)
-            temp_pts = np.asarray(temp.get_box_points())
-            temp_vertex = (temp_pts[3,:] - temp_pts[0,:]) / norm_vertex
-            temp_dot = np.dot(temp_vertex, vector)
-            
-            if not math.isclose(temp_dot, 1., rel_tol= 1e-5):
-                RM = R.from_rotvec((2 * np.pi - angle) * d_vector).as_matrix()    
+        
+        for _ in range(side):
             gripper.rotate(R=RM, center=center)
             collision.rotate(R=RM, center=center)
+            pts = np.asarray(gripper.get_box_points())
+            vertex = pts[3,:] - pts[0,:]
+            vertex_norm = np.linalg.norm(vertex)
+            switch = math.isclose(vertex_norm, params['finger_dims'][0], abs_tol=1e-2)
+            print(vertex_norm)
+            vector = vertex if switch else pts[1,:] - pts[0,:]
+            vector = vector / params['finger_dims'][0] 
 
-            finger_1, finger_2, collision_t = self.finger_model(gripper, collision, vector)
+            finger_1, finger_2, collision_t = self.finger_model(gripper, collision, vector, switch)
             ext_1 = collision_t.get_point_indices_within_bounding_box(self.pcd.points)
             ext_2 = finger_1.get_point_indices_within_bounding_box(self.pcd.points)
             ext_3 = finger_2.get_point_indices_within_bounding_box(self.pcd.points)
