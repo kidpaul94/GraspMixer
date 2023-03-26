@@ -608,7 +608,7 @@ def postprocess(idx: int, anchors: list, q_sample: list, centroids: np.ndarray, 
 
 def parse_args(argv = None) -> None:
     parser = argparse.ArgumentParser(description='CPPE')
-    parser.add_argument('--object_path', default='./objects/pcds/4096_cup.pcd', type=str,
+    parser.add_argument('--object_path', default='./objects/pcds/4096_obj_05.pcd', type=str,
                         help='path of an object we wish to evaluate.')
     parser.add_argument('--num_pts', default=4096, type=int,
                         help='number of points in the .pcd file.')
