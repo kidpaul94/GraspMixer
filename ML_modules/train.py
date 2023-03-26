@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader, random_split
 
 import transforms as T
 from engine import Engine
-from models import SimpleMixer
+from models import MyModel
 from utils import Simple_Dataset
 
 def parse_args(argv=None) -> None:
@@ -55,7 +55,7 @@ def train(args) -> None:
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False)
 
-    model = SimpleMixer(dim=3, num_patch=12, embed_dim=32, depth=2, token_dim=4, channel_dim=4)
+    model = MyModel()
     if args.pretrained is not None:
         state_dict = torch.load(f'./weights/{args.pretrained}.pth', map_location='cpu')
         model.load_state_dict(state_dict)

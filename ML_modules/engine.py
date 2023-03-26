@@ -31,11 +31,12 @@ class Engine(object):
         loss_buf = []
 
         for _, data in tqdm(enumerate(self.loaders[0]), total=len(self.loaders[0])):
-            features, label = data
-            features = features.to(self.device)
+            feature_1, feature_2, label = data
+            feature_1 = feature_1.to(self.device)
+            feature_2 = feature_2.to(self.device)
             
             optim.zero_grad()
-            pred = self.model(features)
+            pred = self.model([feature_1, feature_2])
             loss = self.criterion(pred, label)
             loss.backward()
             optim.step()
@@ -78,9 +79,10 @@ class Engine(object):
         loss_buf = []
 
         for _, data in tqdm(enumerate(loader), total=len(loader)):
-            features, label = data
-            features = features.to(self.device)
-            pred = self.model(features)
+            feature_1, feature_2, label = data
+            feature_1 = feature_1.to(self.device)
+            feature_2 = feature_2.to(self.device)
+            pred = self.model([feature_1, feature_2])
             loss = self.criterion(pred, label)
             loss_buf.append(loss.detach().cpu().numpy())
 

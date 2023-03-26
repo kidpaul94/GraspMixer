@@ -21,6 +21,7 @@ class Compose(object):
         """
         for t in self.transforms:
             features = t(features)
+
         return features
 
 class ToTensor(object):
@@ -43,6 +44,7 @@ class ToTensor(object):
         features = torch.from_numpy(features)
         if not isinstance(features, torch.FloatTensor):
             features = features.float()
+
         return features
 
 class RandomJitter(object):
@@ -71,4 +73,5 @@ class RandomJitter(object):
         assert (self.clip > 0)
         jitter = np.clip(self.sigma * np.random.randn(features.shape[0], 3), -1 * self.clip, self.clip)
         features[:,:] += jitter
+        
         return features

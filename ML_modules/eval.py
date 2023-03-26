@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 import transforms as T
 from engine import Engine
-from models import SimpleMixer
+from models import MyModel
 from utils import Simple_Dataset
 
 def parse_args(argv=None) -> None:
@@ -37,7 +37,7 @@ def eval(args) -> None:
 
     eval_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
-    model = SimpleMixer()
+    model = MyModel()
     if args.pretrained is not None:
         state_dict = torch.load(f'./weights/{args.pretrained}.pth', map_location='cpu')
         model.load_state_dict(state_dict)
