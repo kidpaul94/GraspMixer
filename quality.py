@@ -205,7 +205,8 @@ class GraspMetrics():
 
         return dot_n1d * dot_n2d
 
-    def Q_combined(self, finger_joint: float, surface_normals: list) -> np.ndarray:
+    def Q_combined(self, finger_joint: float, surface_normals: list, friction_coef : float,
+                   mass: float) -> np.ndarray:
         """ 
         Combine all information related to the current grasp and return them as a list.
         
@@ -225,20 +226,20 @@ class GraspMetrics():
             surface normals at the contact points
         CoM : 1x3 : obj : `numpy.ndarray`
             center of mass of the object
-        friction_coefficient : float
-            friction coefficient of the gripper  
+        friction_coef : float
+            friction coefficient between the gripper and the object
+        mass : float
+            object mass in kg  
 
         Returns
         -------
         combined : Mx3 : obj : `numpy.ndarray`
             list of all information related to the current grasp
         """  
-        # quality metrics + object mass
-        Qs = np.array([self.QB1(), self.QC1(), self.QD1(finger_joint),
-                       self.QF1(surface_normals), self.QF2(), 1.]).reshape(-1,3)
-        radius = params['finger_dims'][0] * 0.001
-        # finger radius, object friction_coef, gripper friction_coef
-        others = np.array([radius, 0.42, params['friction_coef']])
+        # quality metrics + physical properties
+        Qs = np.array([[self.QB1(), self.QC1(), self.QD1(finger_joint)],
+                       [self.QF1(surface_normals), self.QF2(), 0.]])
+        others = np.array([params['finger_dims'][0], mass, friction_coef])
         combined = np.vstack((Qs, self.forces, self.torques, others))
         
         return combined

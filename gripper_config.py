@@ -6,7 +6,7 @@ Parameters
 torque_scaling : float
     torque_scaling
 friction_coef : float
-    froction coefficient of a gripper
+    minimum friction coefficient of a gripper
 finger_dims : 1xN : obj : `list`
     radius (mm) and thickness (mm) of the fingers to use
 tolerance : float
