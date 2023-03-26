@@ -608,7 +608,7 @@ def postprocess(idx: int, anchors: list, q_sample: list, centroids: np.ndarray, 
 
 def parse_args(argv = None) -> None:
     parser = argparse.ArgumentParser(description='CPPE')
-    parser.add_argument('--object_path', default='./objects/pcds/4096_obj_05.pcd', type=str,
+    parser.add_argument('--object_path', default='./objects/pcds/4096_cup.pcd', type=str,
                         help='path of an object we wish to evaluate.')
     parser.add_argument('--num_pts', default=4096, type=int,
                         help='number of points in the .pcd file.')
@@ -723,8 +723,8 @@ if __name__ == "__main__":
 
     print(f'Save associated ML data as .npy format...')
     for num in range(len(ML_sample)):
-        np.save(f'{directory}/pts_{num:04d}.npy', ML_sample[num])
+        np.save(f'{directory}/{num:04d}_pts.npy', ML_sample[num])
 
     print(f'Save associated misc data as .npy format...')
     for num in range(len(Qs)):
-        np.save(f'{directory}/misc_{num:04d}.npy', Qs[num])
+        np.save(f'{directory}/{num:04d}_misc.npy', Qs[num])
