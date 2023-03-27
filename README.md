@@ -69,5 +69,5 @@ Contact point pair estimator (CPPE) for 6DOF grasp detection. The framework take
 
 ## ToDo Lists
 
-| **Work on ML pipeline** | ![Progress](https://progress-bar.dev/50) |
+| **Work on ML pipeline** | ![Progress](https://progress-bar.dev/65) |
 | --- | --- |
