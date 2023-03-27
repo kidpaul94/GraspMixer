@@ -20,8 +20,6 @@ def parse_args(argv=None) -> None:
                         help='Directory for saving evaluation results.')
     parser.add_argument('--batch_size', default=8, type=int,
                         help='batch size to train the NNs.')
-    parser.add_argument('--input_size', default=256, type=int,
-                        help='input_size to match dimension of training data.')
 
     global args
     args = parser.parse_args(argv)
@@ -49,8 +47,7 @@ def eval(args) -> None:
     criterion = nn.BCEWithLogitsLoss()
     trainer = Engine(model=model, loaders=eval_loader, criterion=criterion, device=device)  
 
-    for i in range(args.epoch):
-        _ = trainer.validate(epoch=i, show_res=True, save_dir=args.save_path)        
+    _ = trainer.validate()        
 
     print('Finished evaluation!!!')    
 

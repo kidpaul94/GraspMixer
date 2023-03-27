@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from einops.layers.torch import Rearrange
+from einops.layers.torch import Rearrange, Reduce
 
 class FeedForward(nn.Module):
     def __init__(self, dim: int, hidden_dim: int, dropout: float = 0.):
@@ -12,7 +12,9 @@ class FeedForward(nn.Module):
             nn.Linear(hidden_dim, dim),
             nn.Dropout(dropout)
         )
+
     def forward(self, x):
+        
         return self.net(x)
 
 class MixerBlock(nn.Module):
@@ -42,7 +44,11 @@ class SimpleMixer(nn.Module):
         self.embedding = nn.Sequential(nn.Linear(dim, embed_dim))
         mixers = [MixerBlock(embed_dim, num_patch, token_dim, channel_dim) for _ in range(depth)]
         self.backbone = nn.Sequential(*mixers)
-        self.mlp_head = nn.Sequential(nn.LayerNorm(embed_dim), nn.Linear(embed_dim, num_classes))
+        self.mlp_head = nn.Sequential(
+            Reduce('b n e -> b e', reduction='mean'), 
+            nn.LayerNorm(embed_dim), 
+            nn.Linear(embed_dim, num_classes)
+            )
 
     def forward(self, x):
         x = self.embedding(x)
@@ -70,7 +76,7 @@ class MyModel(nn.Module):
         super(MyModel, self).__init__()
         self.llg = LLGBlock(dim=3, embed_dim=36)
         self.mixer = SimpleMixer(dim=36, num_patch=207, embed_dim=128, depth=4, token_dim=128, channel_dim=1024,
-                                 num_classes=10)
+                                 num_classes=1)
 
     def forward(self, x):
         proj = self.llg(x[1])

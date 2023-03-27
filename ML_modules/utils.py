@@ -21,6 +21,9 @@ class Simple_Dataset(Dataset):
 
         if self.transform is not None:
             data_pts = self.transform(data_pts)
+            data_misc = self.transform(data_misc)
+
+        """Need to change dimension of label if we will do multi-class classification."""
 
         return (data_pts, data_misc, label)
 

@@ -18,7 +18,7 @@ def parse_args(argv=None) -> None:
                         help='path to save a log file.')
     parser.add_argument('--pretrained', default=None, type=str,
                         help='name of pretrained weights, if exists.')
-    parser.add_argument('--dataset_path', default='./dataset', type=str,
+    parser.add_argument('--dataset_path', default='../dataset/train', type=str,
                         help='path to training dataset.')
     parser.add_argument('--csv_file', default='summary.csv', type=str,
                         help='summary file of training dataset.')
@@ -28,8 +28,6 @@ def parse_args(argv=None) -> None:
                         help='batch size to train the NNs.')
     parser.add_argument('--num_epochs', default=200, type=int,
                         help='# of epoch to train the NNs.')
-    parser.add_argument('--input_size', default=256, type=int,
-                        help='input_size to match dimenison of training data.')
     parser.add_argument('--lr', default=1e-4, type=float,
                         help='initial learning rate to train.')
     parser.add_argument('--step_size', default=5, type=int,
@@ -45,12 +43,12 @@ def train(args) -> None:
     print(f'Use {device} for training...')
     device = torch.device(device)
 
-    augmentation = T.Compose([T.RandomJitter(), T.ToTensor()])
+    augmentation = T.Compose([T.ToTensor()]) # T.RandomJitter(), 
     dataset = Simple_Dataset(root_dir=args.dataset_path, csv_file=args.csv_file, 
                              transform=augmentation)
 
     train_size = int(len(dataset) * 0.8)
-    valid_size = len(train_set) - train_size
+    valid_size = len(dataset) - train_size
     train_set, val_set = random_split(dataset, [train_size, valid_size])
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False)
@@ -62,7 +60,7 @@ def train(args) -> None:
         print(f'Load model from {args.pretrained}.pth')
 
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters, lr=args.lr)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
     
     trainer = Engine(model=model, loaders=[train_loader, val_loader], 
@@ -71,10 +69,10 @@ def train(args) -> None:
     min_loss = 1e4
     writer = SummaryWriter(log_dir=args.logging)    
 
-    for i in range(args.epoch):
+    for i in range(args.num_epochs):
         train_loss, val_loss = trainer.train_one_epoch(optim=optimizer, epoch=i, 
                                                         scheduler=scheduler)
-        min_loss = trainer.snapshot(epoch=i, min_loss=min_loss, loss=val_loss)
+        min_loss = trainer.snapshot(epoch=i, min_loss=min_loss, loss=val_loss, save_dir=args.save_path)
 
         if args.logging is not None:
             print('Save current loss values to Tensorboard...')

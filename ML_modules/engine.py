@@ -1,3 +1,4 @@
+import os
 import time
 import torch
 import numpy as np
@@ -18,7 +19,7 @@ class Engine(object):
             optimization function used for the training process
         epoch : int
             current epoch number (iteration)
-        scheduler : bool
+        scheduler : obj : torch.optim.lr_scheduler
             learning rate scheduler used for the training process
             
         Returns
@@ -34,6 +35,7 @@ class Engine(object):
             feature_1, feature_2, label = data
             feature_1 = feature_1.to(self.device)
             feature_2 = feature_2.to(self.device)
+            label = torch.unsqueeze(label, 1)
             
             optim.zero_grad()
             pred = self.model([feature_1, feature_2])
@@ -46,7 +48,7 @@ class Engine(object):
             scheduler.step()
 
         with torch.no_grad():
-            val_loss = self.validate(epoch)
+            val_loss = self.validate()
 
         train_loss = np.mean(loss_buf)
         epoch_time = time.time() - epoch_start_time
@@ -57,12 +59,10 @@ class Engine(object):
     @torch.inference_mode()
     def validate(self) -> float:
         """ 
-        Generate a point cloud from a mesh file.
+        Validate the trained model using the validation dataset.
         
         Parameters
         ----------
-        epoch : int
-            current epoch number (iteration)
         show_res : bool
             whether visualize predictions or not during the process
         save_dir : str
@@ -82,17 +82,21 @@ class Engine(object):
             feature_1, feature_2, label = data
             feature_1 = feature_1.to(self.device)
             feature_2 = feature_2.to(self.device)
+            label = torch.unsqueeze(label, 1)
+
             pred = self.model([feature_1, feature_2])
             loss = self.criterion(pred, label)
             loss_buf.append(loss.detach().cpu().numpy())
 
         val_loss = np.mean(loss_buf)
 
+        # Need some kind of visualization function to show evaluation results.
+
         return val_loss
 
     def snapshot(self, epoch: int, min_loss: float, loss: float, save_dir: str) -> float:
         """ 
-        Generate a point cloud from a mesh file.
+        Save the trained model-weights.
         
         Parameters
         ----------
@@ -110,6 +114,10 @@ class Engine(object):
         min_loss : float
             updated min_loss value
         """
+        if not os.path.exists(save_dir):
+            print(f'Generate weights folder...')
+            os.mkdir(save_dir)
+
         if loss < min_loss:
             min_loss = loss
             print(f'Saving #{epoch} epoch model weights to {save_dir}...')
