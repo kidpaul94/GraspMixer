@@ -1,6 +1,9 @@
 import os
+import copy
+import torch
 import numpy as np
 import pandas as pd
+import open3d as o3d
 from torch.utils.data import Dataset
 
 class Simple_Dataset(Dataset):
@@ -23,9 +26,9 @@ class Simple_Dataset(Dataset):
             data_pts = self.transform(data_pts)
             data_misc = self.transform(data_misc)
 
-        """Need to change dimension of label if we will do multi-class classification."""
+        label = class_type(label=label)
 
-        return (data_pts, data_misc, label)
+        return (data_pts, data_misc, label, data_path)
 
 def gen_csv(root_dir: str) -> None:
     """ 
@@ -46,14 +49,85 @@ def gen_csv(root_dir: str) -> None:
             sort_paths = sorted(os.listdir(folder.path))
             with open(f'{folder.path}/prob.txt') as f:
                 cpps = eval(f.read())
-            prob.extend(cpps)
 
             for i in range(0, len(sort_paths) - 1, 2):
-                item = f'{folder.name}/{sort_paths[i][:4]}'
-                data.append(item)
+                if cpps[i // 2] >= 0.0:
+                    item = f'{folder.name}/{sort_paths[i][:4]}' 
+                    data.append(item)
+                    prob.append(cpps[i // 2])
         else:
             print(f'Not a directory: {folder.name}')
 
     list_dict = {'Data': data, 'Prob': prob} 
     df = pd.DataFrame(list_dict) 
     df.to_csv(f'{root_dir}/summary.csv', index=False)
+
+def class_type(label: float, num_class: int = 10, threshold: float = None):
+    """ 
+    Adjust label format depending on a classification type.
+    
+    Parameters
+    ----------
+    label : float
+        original label
+    num_class : int
+        number of classes
+    threshold : float
+        threshold for a binary classification
+        
+    Returns
+    -------
+    label : converted label
+    """
+    if num_class == 1:
+        label = 1.0 if label < threshold else 0.0
+    else:
+        temp = [0.0]*num_class
+        temp[int(round(label, 1) * 10) - 1] = 1.0
+        label = torch.FloatTensor(temp)
+
+    return label
+
+def save_output(data_path: str, prob: float) -> None:
+    """ 
+    Save image of contact surface on an object and its associated 
+    success probability.
+    
+    Parameters
+    ----------
+    data_path : str
+        path to the input contact surface
+    prob : float
+        probability of success
+        
+    Returns
+    -------
+    None
+    """
+    obj_name = data_path[:-5]
+    data_pts = np.load(f'../dataset/train/{data_path}_pts.npy')
+    grasp = o3d.geometry.PointCloud()
+    grasp.points = o3d.utility.Vector3dVector(data_pts[:,:3])
+    grasp.paint_uniform_color([0, 1, 0])
+    pcd = o3d.io.read_point_cloud(f'../objects/pcds/{obj_name}.pcd')
+
+    idx = int(data_path[-5:])
+    with open(f'../objects/dicts/{obj_name}/{obj_name}_cpps.txt') as f:
+        cpp = eval(f.read())[idx]
+
+    mesh_1 = o3d.geometry.TriangleMesh.create_sphere(radius=5, resolution=5).paint_uniform_color([1, 0.7, 0])
+    mesh_2 = copy.deepcopy(mesh_1)
+    mesh_1.translate((cpp[0], cpp[1], cpp[2]), relative=False)
+    mesh_2.translate((cpp[3], cpp[4], cpp[5]), relative=False)
+
+    vis = o3d.visualization.Visualizer()
+    vis.create_window(visible=False)
+
+    for data in [pcd, grasp, mesh_1, mesh_2]:
+        vis.add_geometry(data)
+        vis.update_geometry(data)
+
+    vis.poll_events()
+    vis.update_renderer()
+    vis.capture_screen_image(filename=f'{data_path}.png', do_render=False)
+    vis.destroy_window()

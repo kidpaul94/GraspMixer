@@ -35,7 +35,6 @@ class Engine(object):
             feature_1, feature_2, label = data
             feature_1 = feature_1.to(self.device)
             feature_2 = feature_2.to(self.device)
-            label = torch.unsqueeze(label, 1)
             
             optim.zero_grad()
             pred = self.model([feature_1, feature_2])
@@ -82,7 +81,6 @@ class Engine(object):
             feature_1, feature_2, label = data
             feature_1 = feature_1.to(self.device)
             feature_2 = feature_2.to(self.device)
-            label = torch.unsqueeze(label, 1)
 
             pred = self.model([feature_1, feature_2])
             loss = self.criterion(pred, label)

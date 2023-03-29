@@ -75,8 +75,8 @@ class MyModel(nn.Module):
     def __init__(self):
         super(MyModel, self).__init__()
         self.llg = LLGBlock(dim=3, embed_dim=36)
-        self.mixer = SimpleMixer(dim=36, num_patch=207, embed_dim=128, depth=4, token_dim=128, channel_dim=1024,
-                                 num_classes=1)
+        self.mixer = SimpleMixer(dim=36, num_patch=207, embed_dim=256, depth=4, token_dim=128, channel_dim=1024,
+                                 num_classes=10)
 
     def forward(self, x):
         proj = self.llg(x[1])
