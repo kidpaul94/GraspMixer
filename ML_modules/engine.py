@@ -4,6 +4,8 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
+from utils import save_output
+
 class Engine(object):
     def __init__(self, model, loaders, criterion, device: str = 'cuda'):
         self.model, self.device = model.to(device), device
@@ -32,7 +34,7 @@ class Engine(object):
         loss_buf = []
 
         for _, data in tqdm(enumerate(self.loaders[0]), total=len(self.loaders[0])):
-            feature_1, feature_2, label = data
+            feature_1, feature_2, label, _ = data
             feature_1 = feature_1.to(self.device)
             feature_2 = feature_2.to(self.device)
             
@@ -56,16 +58,16 @@ class Engine(object):
         return (train_loss, val_loss)
 
     @torch.inference_mode()
-    def validate(self) -> float:
+    def validate(self, save_dir: str, show_res: bool = False) -> float:
         """ 
         Validate the trained model using the validation dataset.
         
         Parameters
         ----------
-        show_res : bool
-            whether visualize predictions or not during the process
         save_dir : str
             saving directory of predictions
+        show_res : bool
+            whether visualize predictions or not during the process
             
         Returns
         -------
@@ -78,7 +80,7 @@ class Engine(object):
         loss_buf = []
 
         for _, data in tqdm(enumerate(loader), total=len(loader)):
-            feature_1, feature_2, label = data
+            feature_1, feature_2, label, path = data
             feature_1 = feature_1.to(self.device)
             feature_2 = feature_2.to(self.device)
 
@@ -88,7 +90,9 @@ class Engine(object):
 
         val_loss = np.mean(loss_buf)
 
-        # Need some kind of visualization function to show evaluation results.
+        if show_res:
+            for i in range(len(label)):
+                save_output(save_dir=save_dir, data_name=path[i], prob=label[i])
 
         return val_loss
 

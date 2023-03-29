@@ -26,7 +26,7 @@ class Simple_Dataset(Dataset):
             data_pts = self.transform(data_pts)
             data_misc = self.transform(data_misc)
 
-        label = class_type(label=label)
+        label = class_type(label=label, num_class=1)
 
         return (data_pts, data_misc, label, data_path)
 
@@ -62,7 +62,7 @@ def gen_csv(root_dir: str) -> None:
     df = pd.DataFrame(list_dict) 
     df.to_csv(f'{root_dir}/summary.csv', index=False)
 
-def class_type(label: float, num_class: int = 10, threshold: float = None):
+def class_type(label: float, num_class: int = 10):
     """ 
     Adjust label format depending on a classification type.
     
@@ -72,31 +72,30 @@ def class_type(label: float, num_class: int = 10, threshold: float = None):
         original label
     num_class : int
         number of classes
-    threshold : float
-        threshold for a binary classification
         
     Returns
     -------
     label : converted label
     """
-    if num_class == 1:
-        label = 1.0 if label < threshold else 0.0
+    if num_class > 1:
+        temp = int(round(label, 1) * 10) - 1
+        label = torch.LongTensor(temp)
     else:
-        temp = [0.0]*num_class
-        temp[int(round(label, 1) * 10) - 1] = 1.0
-        label = torch.FloatTensor(temp)
+        print('# of classes has to be larger than 1!!!')
 
     return label
 
-def save_output(data_path: str, prob: float) -> None:
+def save_output(save_dir: str, data_name: str, prob: float) -> None:
     """ 
     Save image of contact surface on an object and its associated 
     success probability.
     
     Parameters
     ----------
-    data_path : str
-        path to the input contact surface
+    save_dir : str
+        saving directory of the visualizations
+    data_name : str
+        name of the input contact surface
     prob : float
         probability of success
         
@@ -104,14 +103,18 @@ def save_output(data_path: str, prob: float) -> None:
     -------
     None
     """
-    obj_name = data_path[:-5]
-    data_pts = np.load(f'../dataset/train/{data_path}_pts.npy')
+    if not os.path.exists(save_dir):
+        print(f'Generate results folder...')
+        os.mkdir(save_dir)
+
+    obj_name = data_name[:-5]
+    data_pts = np.load(f'../dataset/train/{data_name}_pts.npy')
     grasp = o3d.geometry.PointCloud()
     grasp.points = o3d.utility.Vector3dVector(data_pts[:,:3])
     grasp.paint_uniform_color([0, 1, 0])
     pcd = o3d.io.read_point_cloud(f'../objects/pcds/{obj_name}.pcd')
 
-    idx = int(data_path[-5:])
+    idx = int(data_name[-5:])
     with open(f'../objects/dicts/{obj_name}/{obj_name}_cpps.txt') as f:
         cpp = eval(f.read())[idx]
 
@@ -129,5 +132,5 @@ def save_output(data_path: str, prob: float) -> None:
 
     vis.poll_events()
     vis.update_renderer()
-    vis.capture_screen_image(filename=f'{data_path}.png', do_render=False)
+    vis.capture_screen_image(filename=f'{save_dir}/{data_name}_{prob:04f}.png', do_render=False)
     vis.destroy_window()
