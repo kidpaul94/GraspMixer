@@ -465,11 +465,11 @@ class Preprocess():
         surf_2.normals = o3d.utility.Vector3dVector(self.surface_normals[1])
 
         fpfh_1 = o3d.pipelines.registration.compute_fpfh_feature(surf_1,
-                 o3d.geometry.KDTreeSearchParamHybrid(radius=5, max_nn=5)).data
+                 o3d.geometry.KDTreeSearchParamHybrid(radius=10, max_nn=20)).data
         fpfh_1 = fpfh_1.T
 
         fpfh_2 = o3d.pipelines.registration.compute_fpfh_feature(surf_2,
-                 o3d.geometry.KDTreeSearchParamHybrid(radius=5, max_nn=5)).data
+                 o3d.geometry.KDTreeSearchParamHybrid(radius=10, max_nn=20)).data
         fpfh_2 = fpfh_2.T
         
         idx_1, idx_2 = self.feature_indices(surface_1=surf_1, surface_2=surf_2, anchor_1=anchor_1, anchor_2=anchor_2)
@@ -548,8 +548,8 @@ class Preprocess():
         surf2_tree = o3d.geometry.KDTreeFlann(surface_2)
 
         for i in range(len(anchor_1)):
-            [_, idx_1, _] = surf1_tree.search_knn_vector_3d(surface_1.points[anchor_1[i]], 5)
-            [_, idx_2, _] = surf2_tree.search_knn_vector_3d(surface_2.points[anchor_2[i]], 5)
+            [_, idx_1, _] = surf1_tree.search_knn_vector_3d(surface_1.points[anchor_1[i]], 20)
+            [_, idx_2, _] = surf2_tree.search_knn_vector_3d(surface_2.points[anchor_2[i]], 20)
             feat_idx1.append(idx_1)
             feat_idx2.append(idx_2)
 
