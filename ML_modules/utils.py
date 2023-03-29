@@ -77,11 +77,12 @@ def class_type(label: float, num_class: int = 10):
     -------
     label : converted label
     """
+    assert num_class > 0, '# of classes has to be larger than 1'
     if num_class > 1:
         temp = int(round(label, 1) * 10) - 1
-        label = torch.LongTensor(temp)
+        label = torch.LongTensor([temp])
     else:
-        print('# of classes has to be larger than 1!!!')
+        label = torch.FloatTensor([label])
 
     return label
 

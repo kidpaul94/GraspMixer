@@ -58,14 +58,12 @@ class Engine(object):
         return (train_loss, val_loss)
 
     @torch.inference_mode()
-    def validate(self, save_dir: str, show_res: bool = False) -> float:
+    def validate(self, show_res: bool = False) -> float:
         """ 
         Validate the trained model using the validation dataset.
         
         Parameters
         ----------
-        save_dir : str
-            saving directory of predictions
         show_res : bool
             whether visualize predictions or not during the process
             
@@ -92,7 +90,7 @@ class Engine(object):
 
         if show_res:
             for i in range(len(label)):
-                save_output(save_dir=save_dir, data_name=path[i], prob=label[i])
+                save_output(save_dir='./results', data_name=path[i], prob=label[i])
 
         return val_loss
 
