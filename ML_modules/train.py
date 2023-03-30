@@ -12,7 +12,7 @@ from utils import Simple_Dataset
 
 def parse_args(argv=None) -> None:
     parser = argparse.ArgumentParser(description='PTAE')
-    parser.add_argument('--cuda', default=False, type=bool,
+    parser.add_argument('--cuda', default=True, type=bool,
                         help='use CUDA to train model.')
     parser.add_argument('--logging', default='./logs', type=str,
                         help='path to save a log file.')
@@ -26,7 +26,7 @@ def parse_args(argv=None) -> None:
                         help='Directory for saving checkpoint models.')
     parser.add_argument('--batch_size', default=8, type=int,
                         help='batch size to train the NNs.')
-    parser.add_argument('--num_epochs', default=5, type=int,
+    parser.add_argument('--num_epochs', default=200, type=int,
                         help='# of epoch to train the NNs.')
     parser.add_argument('--lr', default=1e-4, type=float,
                         help='initial learning rate to train.')
@@ -53,7 +53,7 @@ def train(args) -> None:
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False)
 
-    model = MyModel()
+    model = MyModel().to(device)
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)

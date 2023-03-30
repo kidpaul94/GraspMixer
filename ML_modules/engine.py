@@ -8,7 +8,7 @@ from utils import save_output
 
 class Engine(object):
     def __init__(self, model, loaders, criterion, device: str = 'cuda'):
-        self.model, self.device = model.to(device), device
+        self.model, self.device = model, device
         self.loaders, self.criterion = loaders, criterion
 
     def train_one_epoch(self, optim, epoch: int, scheduler = None) -> tuple:
@@ -37,6 +37,7 @@ class Engine(object):
             feature_1, feature_2, label, _ = data
             feature_1 = feature_1.to(self.device)
             feature_2 = feature_2.to(self.device)
+            label = label.to(self.device)
             
             optim.zero_grad()
             pred = self.model([feature_1, feature_2])
@@ -81,6 +82,7 @@ class Engine(object):
             feature_1, feature_2, label, path = data
             feature_1 = feature_1.to(self.device)
             feature_2 = feature_2.to(self.device)
+            label = label.to(self.device)
 
             pred = self.model([feature_1, feature_2])
             loss = self.criterion(pred, label)
