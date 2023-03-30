@@ -17,7 +17,7 @@ class Engine(object):
         
         Parameters
         ----------
-        optim : string
+        optim : obj : torch.optim
             optimization function used for the training process
         epoch : int
             current epoch number (iteration)
@@ -94,20 +94,25 @@ class Engine(object):
 
         return val_loss
 
-    def snapshot(self, epoch: int, min_loss: float, loss: float, save_dir: str) -> float:
+    def snapshot(self, min_loss: float, loss: float, save_dir: str, epoch: int, optim, 
+                 scheduler = None) -> float:
         """ 
-        Save the trained model-weights.
+        Save the trained model-checkpoint.
         
         Parameters
         ----------
-        epoch : int
-            current epoch number (iteration)
         min_loss : float
             minimum loss value that has been saved
         loss : float
             calculated loss value of the current iteration
         save_dir : str
-            saving directory of the current model weights
+            saving directory of the current model checkpoint
+        epoch : int
+            current epoch number (iteration)
+        optim : obj : torch.optim
+            optimization function used for the training process
+        scheduler : obj : torch.optim.lr_scheduler
+            learning rate scheduler used for the training process
             
         Returns
         -------
@@ -120,7 +125,11 @@ class Engine(object):
 
         if loss < min_loss:
             min_loss = loss
-            print(f'Saving #{epoch} epoch model weights to {save_dir}...')
-            torch.save(self.model.state_dict(), f'{save_dir}/weights_{epoch}.pth')
+            print(f'Saving #{epoch + 1} epoch model checkpoint to {save_dir}...')
+            dict = {'model_state_dict': self.model.state_dict(),
+                    'optimizer_state_dict': optim.state_dict(),
+                    'scheduler_state_dict': scheduler.state_dict(),
+                    'epoch': epoch + 1, 'loss': min_loss,}
+            torch.save(dict, f'{save_dir}/checkpoint_{epoch + 1}.pth')
             
         return min_loss

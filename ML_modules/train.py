@@ -12,11 +12,11 @@ from utils import Simple_Dataset
 
 def parse_args(argv=None) -> None:
     parser = argparse.ArgumentParser(description='PTAE')
-    parser.add_argument('--cuda', default=True, type=bool,
+    parser.add_argument('--cuda', default=False, type=bool,
                         help='use CUDA to train model.')
     parser.add_argument('--logging', default='./logs', type=str,
                         help='path to save a log file.')
-    parser.add_argument('--pretrained', default=None, type=str,
+    parser.add_argument('--pretrained', default='weights_2', type=str,
                         help='name of pretrained weights, if exists.')
     parser.add_argument('--dataset_path', default='../dataset/train', type=str,
                         help='path to training dataset.')
@@ -26,7 +26,7 @@ def parse_args(argv=None) -> None:
                         help='Directory for saving checkpoint models.')
     parser.add_argument('--batch_size', default=8, type=int,
                         help='batch size to train the NNs.')
-    parser.add_argument('--num_epochs', default=200, type=int,
+    parser.add_argument('--num_epochs', default=5, type=int,
                         help='# of epoch to train the NNs.')
     parser.add_argument('--lr', default=1e-4, type=float,
                         help='initial learning rate to train.')
@@ -54,25 +54,28 @@ def train(args) -> None:
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False)
 
     model = MyModel()
-    if args.pretrained is not None:
-        state_dict = torch.load(f'./weights/{args.pretrained}.pth', map_location='cpu')
-        model.load_state_dict(state_dict)
-        print(f'Load model from {args.pretrained}.pth')
-
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
+    start, min_loss = 0, 1e4
+
+    if args.pretrained is not None:
+        checkpoint = torch.load(f'./weights/{args.pretrained}.pth', map_location='cpu')
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        start, min_loss = checkpoint['epoch'], checkpoint['loss']
+        print(f'Load the checkpoint from {args.pretrained}.pth')
     
     trainer = Engine(model=model, loaders=[train_loader, val_loader], 
                      criterion=criterion, device=device)
+    writer = SummaryWriter(log_dir=args.logging)
 
-    min_loss = 1e4
-    writer = SummaryWriter(log_dir=args.logging)    
-
-    for i in range(args.num_epochs):
+    for i in range(start, args.num_epochs):
         train_loss, val_loss = trainer.train_one_epoch(optim=optimizer, epoch=i, 
                                                         scheduler=scheduler)
-        min_loss = trainer.snapshot(epoch=i, min_loss=min_loss, loss=val_loss, save_dir=args.save_path)
+        min_loss = trainer.snapshot(min_loss=min_loss, loss=val_loss, save_dir=args.save_path,
+                                    epoch=i, optim=optimizer, scheduler=scheduler)
 
         if args.logging is not None:
             print('Save current loss values to Tensorboard...')
