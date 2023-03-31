@@ -39,13 +39,13 @@ class MixerBlock(nn.Module):
 
 class SimpleMixer(nn.Module):
     def __init__(self, dim: int, num_patch: int, embed_dim: int, depth: int, token_dim: int, 
-                 channel_dim: int, num_classes: int):
+                 channel_dim: int, dropout: float, num_classes: int):
         super(SimpleMixer, self).__init__()
         self.embedding = nn.Sequential(nn.Linear(dim, embed_dim))
-        mixers = [MixerBlock(embed_dim, num_patch, token_dim, channel_dim) for _ in range(depth)]
+        mixers = [MixerBlock(embed_dim, num_patch, token_dim, channel_dim, dropout) for _ in range(depth)]
         self.backbone = nn.Sequential(*mixers)
         self.mlp_head = nn.Sequential(
-            Reduce('b n e -> b e', reduction='mean'), 
+            Reduce('b n e -> b e', reduction='max'), 
             nn.LayerNorm(embed_dim), 
             nn.Linear(embed_dim, num_classes)
             )
@@ -76,7 +76,7 @@ class MyModel(nn.Module):
         super(MyModel, self).__init__()
         self.llg = LLGBlock(dim=3, embed_dim=36)
         self.mixer = SimpleMixer(dim=36, num_patch=207, embed_dim=256, depth=4, token_dim=128, channel_dim=1024,
-                                 num_classes=1)
+                                 dropout=0.1, num_classes=1)
 
     def forward(self, x):
         proj = self.llg(x[1])
