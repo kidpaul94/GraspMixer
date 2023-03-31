@@ -6,11 +6,13 @@ import pandas as pd
 import open3d as o3d
 from torch.utils.data import Dataset
 
+import transforms as T
+
 class Simple_Dataset(Dataset):
     def __init__(self, root_dir: str, csv_file: str, transform = None) -> None:
         self.root_dir = root_dir
         self.annotations = pd.read_csv(f'{root_dir}/{csv_file}')
-        self.transform = transform
+        self.transform, self.toTensor = transform, T.ToTensor()
 
     def __len__(self):
         return len(self.annotations)
@@ -24,7 +26,7 @@ class Simple_Dataset(Dataset):
 
         if self.transform is not None:
             data_pts = self.transform(data_pts)
-            data_misc = self.transform(data_misc)
+        data_misc = self.toTensor(data_misc)
 
         label = class_type(label=label, num_class=1)
 

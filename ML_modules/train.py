@@ -16,7 +16,7 @@ def parse_args(argv=None) -> None:
                         help='use CUDA to train model.')
     parser.add_argument('--logging', default='./logs', type=str,
                         help='path to save a log file.')
-    parser.add_argument('--pretrained', default='weights_2', type=str,
+    parser.add_argument('--pretrained', default=None, type=str,
                         help='name of pretrained weights, if exists.')
     parser.add_argument('--dataset_path', default='../dataset/train', type=str,
                         help='path to training dataset.')
@@ -43,7 +43,7 @@ def train(args) -> None:
     print(f'Use {device} for training...')
     device = torch.device(device)
 
-    augmentation = T.Compose([T.ToTensor()]) # T.RandomJitter(), 
+    augmentation = T.Compose([T.RandomRotate(), T.RandomPermute(), T.RandomJitter(), T.ToTensor()])
     dataset = Simple_Dataset(root_dir=args.dataset_path, csv_file=args.csv_file, 
                              transform=augmentation)
 
