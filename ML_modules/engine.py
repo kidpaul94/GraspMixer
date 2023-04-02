@@ -44,7 +44,7 @@ class Engine(object):
             loss = self.criterion(pred, label)
             loss.backward()
             optim.step()
-            loss_buf.append(loss.detach().cpu().numpy())
+            loss_buf.append(loss.item())
 
         if scheduler is not None:
             scheduler.step()
@@ -52,7 +52,7 @@ class Engine(object):
         with torch.no_grad():
             val_loss = self.validate()
 
-        train_loss = np.mean(loss_buf)
+        train_loss = sum(loss_buf) / len(loss_buf)
         epoch_time = time.time() - epoch_start_time
         print(f'Train_loss: {train_loss} | Val_loss: {val_loss} | Epoch_time: {epoch_time:0.4f}s')
 
@@ -86,9 +86,9 @@ class Engine(object):
 
             pred = self.model([feature_1, feature_2])
             loss = self.criterion(pred, label)
-            loss_buf.append(loss.detach().cpu().numpy())
+            loss_buf.append(loss.item())
 
-        val_loss = np.mean(loss_buf)
+        val_loss = sum(loss_buf) / len(loss_buf)
 
         if show_res:
             for i in range(len(label)):

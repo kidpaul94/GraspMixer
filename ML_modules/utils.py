@@ -64,7 +64,7 @@ def gen_csv(root_dir: str) -> None:
     df = pd.DataFrame(list_dict) 
     df.to_csv(f'{root_dir}/summary.csv', index=False)
 
-def class_type(label: float, num_class: int = 10):
+def class_type(label: float, num_class: int = 10, threshold: float = 0.4):
     """ 
     Adjust label format depending on a classification type.
     
@@ -74,6 +74,8 @@ def class_type(label: float, num_class: int = 10):
         original label
     num_class : int
         number of classes
+    threshold : float
+        threshold value for binary classification
         
     Returns
     -------
@@ -84,9 +86,28 @@ def class_type(label: float, num_class: int = 10):
         temp = int(round(label, 1) * 10) - 1
         label = torch.LongTensor([temp])
     else:
+        label = 1.0 if label > threshold else 0.0
         label = torch.FloatTensor([label])
 
     return label
+
+def model_size(model: torch.nn.Module) -> int:
+    """ 
+    Calculate the total # of parameters in the model.
+    
+    Parameters
+    ----------
+    model : obj : 'torch.nn.Module' 
+        neural network model to check
+        
+    Returns
+    -------
+    pytorch_total_params : int
+        total # of parameters
+    """
+    pytorch_total_params = sum(p.numel() for p in model.parameters())
+
+    return pytorch_total_params
 
 def save_output(save_dir: str, data_name: str, prob: float) -> None:
     """ 
