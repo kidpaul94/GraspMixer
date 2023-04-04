@@ -494,14 +494,14 @@ class Preprocess():
 
         Parameters
         ----------
-        xyz : BxNx3 : obj : torch.Tensor
+        xyz : BxNx3 : obj : 'torch.Tensor'
             pointcloud data
         npoint : int
             number of samples
         
         Returns
         -------
-        centroids : BxM : obj : torch.Tensor 
+        centroids : BxM : obj : 'torch.Tensor' 
             sampled pointcloud index 
         """
         device = xyz.device

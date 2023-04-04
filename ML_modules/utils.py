@@ -64,7 +64,7 @@ def gen_csv(root_dir: str) -> None:
     df = pd.DataFrame(list_dict) 
     df.to_csv(f'{root_dir}/summary.csv', index=False)
 
-def class_type(label: float, num_class: int = 10, threshold: float = 0.4):
+def class_type(label: float, num_class: int = 10, threshold: float = 0.6):
     """ 
     Adjust label format depending on a classification type.
     

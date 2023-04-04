@@ -29,16 +29,16 @@ class ToTensor(object):
     @staticmethod
     def __call__(features):
         """ 
-        Convert np.ndarray features to torch.Tensor features.
+        Convert numpy.ndarray features to torch.Tensor features.
         
         Parameters
         ----------
-        features : Nx3 : obj : np.ndarray
+        features : Nx3 : obj : 'numpy.ndarray'
             initial input features
             
         Returns
         -------
-        features : Nx3 : obj : torch.Tensor
+        features : Nx3 : obj : 'torch.Tensor'
             converted torch.Tensor features
         """
         features = torch.from_numpy(features)
@@ -59,12 +59,12 @@ class RandomRotate(object):
         ----------
         angle : 1X3 : obj : `list`
             list of paramters to control random rotation in each axis 
-        features : Nx3 : obj : np.ndarray
+        features : Nx3 : obj : 'numpy.ndarray'
             initial input features
             
         Returns
         -------
-        features : Nx3 : obj : np.ndarray
+        features : Nx3 : obj : 'numpy.ndarray'
             transformed features
         """
         angle_x = np.random.uniform(-self.angle[0], self.angle[0]) * np.pi
@@ -96,12 +96,12 @@ class RandomScale(object):
             min & max  scaling factors
         anisotropic : bool
             whether equally scale an input in every dimension
-        features : Nx3 : obj : np.ndarray
+        features : Nx3 : obj : 'numpy.ndarray'
             initial input features
             
         Returns
         -------
-        features : Nx3 : obj : np.ndarray
+        features : Nx3 : obj : 'numpy.ndarray'
             transformed features
         """
         scale = np.random.uniform(self.scale[0], self.scale[1], 3 if self.anisotropic else 1)
@@ -118,12 +118,12 @@ class RandomPermute(object):
         
         Parameters
         ----------
-        features : Nx3 : obj : np.ndarray
+        features : Nx3 : obj : 'numpy.ndarray'
             initial input features
             
         Returns
         -------
-        features : Nx3 : obj : np.ndarray
+        features : Nx3 : obj : 'numpy.ndarray'
             transformed features
         """
         features = features[np.random.permutation(features.shape[0]), :]
@@ -145,12 +145,12 @@ class RandomJitter(object):
             standard deviation of a sampling distribution
         clip : float
             cliping value of randomly generated jitters
-        features : Nx3 : obj : np.ndarray
+        features : Nx3 : obj : 'numpy.ndarray'
             initial input features
             
         Returns
         -------
-        features : Nx3 : obj : np.ndarray
+        features : Nx3 : obj : 'numpy.ndarray'
             features with jitters
         """
         assert (self.clip > 0)

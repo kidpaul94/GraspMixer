@@ -42,6 +42,7 @@ Contact point pair estimator (CPPE) for 6DOF grasp detection. The framework take
     git clone https://github.com/kidpaul94/CPPE.git
     cd CPPE/
     pip3 install -r requirements.txt
+    pip3 install 'git+https://github.com/katsura-jp/pytorch-cosine-annealing-with-warmup'
 
 ## How to Run
 

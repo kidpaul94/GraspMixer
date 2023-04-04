@@ -3,7 +3,8 @@ import argparse
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
-from torch.utils.data import DataLoader, random_split
+from cosine_annealing_warmup import CosineAnnealingWarmupRestarts
+from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
 
 import transforms as T
 from engine import Engine
@@ -11,7 +12,7 @@ from models import MyModel
 from utils import Simple_Dataset
 
 def parse_args(argv=None) -> None:
-    parser = argparse.ArgumentParser(description='PTAE')
+    parser = argparse.ArgumentParser(description='CPPE')
     parser.add_argument('--cuda', default=True, type=bool,
                         help='use CUDA to train model.')
     parser.add_argument('--logging', default='./logs', type=str,
@@ -24,19 +25,43 @@ def parse_args(argv=None) -> None:
                         help='summary file of training dataset.')
     parser.add_argument('--save_path', default='./weights', type=str,
                         help='Directory for saving checkpoint models.')
-    parser.add_argument('--batch_size', default=8, type=int,
+    parser.add_argument('--batch_size', default=16, type=int,
                         help='batch size to train the NNs.')
-    parser.add_argument('--num_epochs', default=200, type=int,
+    parser.add_argument('--num_epochs', default=60, type=int,
                         help='# of epoch to train the NNs.')
-    parser.add_argument('--lr', default=1e-4, type=float,
-                        help='initial learning rate to train.')
-    parser.add_argument('--step_size', default=5, type=int,
-                        help='lr step size')
-    parser.add_argument('--gamma', default=0.3, type=float,
+    parser.add_argument('--lr', default=[1e-6, 5e-4], type=float, nargs='+',
+                        help='minimum and maximum learning rate to train.')
+    parser.add_argument('--step', default=[10, 20], type=int, nargs='+',
+                        help='warmup_steps and first_cycle_steps.')
+    parser.add_argument('--gamma', default=0.7, type=float,
                         help='For each lr step, what to multiply the lr by')
 
     global args
     args = parser.parse_args(argv)
+
+def data_balance(dataset, class_weights: list = [85, 15]):
+    """ 
+    Generate a sampler to draw data with given class probabilities.
+    
+    Parameters
+    ----------
+    dataset : obj : 'torch.utils.data.dataset.Subset'
+        dataset that will use a sampler
+    class_weights : 1X2 : obj : `list` 
+        class weights of two classes
+        
+    Returns
+    -------
+    sampler : obj : 'torch.utils.data.WeightedRandomSampler'
+        weighted random sampler
+    """
+    sample_weights = [0] * len(dataset)
+    for idx, (_, _, label, _) in enumerate(dataset):
+        sample_weights[idx] = class_weights[int(label.item())]
+    
+    sampler = WeightedRandomSampler(weights=sample_weights, num_samples=len(sample_weights))
+
+    return sampler
 
 def train(args) -> None:
     device = 'cuda' if args.cuda and torch.cuda.is_available() else 'cpu'
@@ -46,17 +71,19 @@ def train(args) -> None:
     augmentation = T.Compose([T.RandomRotate(), T.RandomPermute(), T.RandomJitter(), T.ToTensor()])
     dataset = Simple_Dataset(root_dir=args.dataset_path, csv_file=args.csv_file, 
                              transform=augmentation)
-
     train_size = int(len(dataset) * 0.8)
     valid_size = len(dataset) - train_size
     train_set, val_set = random_split(dataset, [train_size, valid_size])
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
+
+    sampler = data_balance(dataset=train_set)
+    train_loader = DataLoader(train_set, batch_size=args.batch_size, sampler=sampler)
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False)
 
     model = MyModel().to(device)
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr[1])
+    scheduler = CosineAnnealingWarmupRestarts(optimizer, first_cycle_steps=args.step[1], max_lr=args.lr[1],  
+                                              min_lr=args.lr[0], warmup_steps=args.step[0], gamma=args.gamma)
     start, min_loss = 0, 1e4
 
     if args.pretrained is not None:
@@ -72,16 +99,16 @@ def train(args) -> None:
     writer = SummaryWriter(log_dir=args.logging)
 
     for i in range(start, args.num_epochs):
-        train_loss, val_loss = trainer.train_one_epoch(optim=optimizer, epoch=i, 
-                                                        scheduler=scheduler)
+        train_loss, val_loss, acc, f1 = trainer.train_one_epoch(optim=optimizer, epoch=i, 
+                                                                scheduler=scheduler)
         min_loss = trainer.snapshot(min_loss=min_loss, loss=val_loss, save_dir=args.save_path,
                                     epoch=i, optim=optimizer, scheduler=scheduler)
 
         if args.logging is not None:
-            print('Save current loss values to Tensorboard...')
+            print('Save current training records to Tensorboard...')
             lr = optimizer.param_groups[0]['lr']
-            writer.add_scalar('Train Loss', train_loss, i)
-            writer.add_scalar('Eval Loss', val_loss, i)
+            writer.add_scalars('Loss Logging', {'Train': train_loss, 'Val': val_loss}, i)
+            writer.add_scalars('Score', {'Accunracy': acc, 'F1': f1}, i)
             writer.add_scalar('Learning Rate', lr, i)          
 
     print('Finished training!!!')    

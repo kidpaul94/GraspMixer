@@ -9,15 +9,13 @@ from models import MyModel
 from utils import Simple_Dataset
 
 def parse_args(argv=None) -> None:
-    parser = argparse.ArgumentParser(description='PTAE')
+    parser = argparse.ArgumentParser(description='CPPE')
     parser.add_argument('--cuda', default=True, type=bool,
                         help='use CUDA to evaluate model.')
     parser.add_argument('--pretrained', default=None, type=str,
                         help='name of pretrained weights, if exists.')
     parser.add_argument('--dataset_path', default='./dataset', type=str,
                         help='path to evaluation dataset.')
-    parser.add_argument('--save_path', default='./weights', type=str,
-                        help='Directory for saving evaluation results.')
     parser.add_argument('--batch_size', default=8, type=int,
                         help='batch size to train the NNs.')
 
@@ -35,7 +33,7 @@ def eval(args) -> None:
 
     eval_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
-    model = MyModel()
+    model = MyModel().to(device)
     if args.pretrained is not None:
         state_dict = torch.load(f'./weights/{args.pretrained}.pth', map_location='cpu')
         model.load_state_dict(state_dict)
@@ -47,7 +45,11 @@ def eval(args) -> None:
     criterion = nn.BCEWithLogitsLoss()
     trainer = Engine(model=model, loaders=eval_loader, criterion=criterion, device=device)  
 
-    _ = trainer.validate()        
+    _, acc, f1 = trainer.validate()    
+
+    print('------------------------------------------------')
+    print(f'Acc: {acc:0.4f} | F1 score: {f1:0.4f}')
+    print('------------------------------------------------')    
 
     print('Finished evaluation!!!')    
 
