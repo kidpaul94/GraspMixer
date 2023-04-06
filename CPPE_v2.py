@@ -11,6 +11,7 @@ from multiprocessing import Process, Lock, Manager
 
 from quality import GraspMetrics
 from gripper_config import params
+from ML_modules.models import MSG_fpfh
 from CPPE_utils import rot_matrix, unpacking, OtherCS
 
 class Gripper():
@@ -431,7 +432,7 @@ class Preprocess():
 
         return surface_pts, surface_normals
 
-    def ML_preprocess(self, centroid: np.ndarray) -> np.ndarray:
+    def ML_preprocess(self, centroid: np.ndarray, is_training: bool = False) -> np.ndarray:
         """ 
         Preprocess received data to generate input for deep learning algorithm
         
@@ -443,120 +444,31 @@ class Preprocess():
             surface normals (numpy.ndarray) around the contact points
         centroid : Nx3 : obj : `numpy.ndarray`
             centroid of a contact point pair
+        is_training : bool
+            whether preprocess the data for training or evaluation
 
         Returns
         -------
-        Nx6 : obj : `numpy.ndarray` : input data of deep learning algorithm
+        res : Nx6 : obj : 'list' or Nx36 : obj : `numpy.ndarray` 
+            input data of deep learning algorithm
         """
         normalized_1 = (self.surface_pts[0] - centroid) / self.max_d
         normalized_2 = (self.surface_pts[1] - centroid) / self.max_d
 
-        temp_1 = torch.from_numpy(normalized_1).unsqueeze_(0)
-        temp_2 = torch.from_numpy(normalized_2).unsqueeze_(0)
-        anchor_1 = self.farthest_point_sample(xyz=temp_1, npoint=20)[0].tolist()
-        anchor_2 = self.farthest_point_sample(xyz=temp_2, npoint=20)[0].tolist()
-
-        surf_1 = o3d.geometry.PointCloud()
-        surf_1.points = o3d.utility.Vector3dVector(normalized_1)
-        surf_1.normals = o3d.utility.Vector3dVector(self.surface_normals[0])
-
-        surf_2 = o3d.geometry.PointCloud()
-        surf_2.points = o3d.utility.Vector3dVector(normalized_2)
-        surf_2.normals = o3d.utility.Vector3dVector(self.surface_normals[1])
-
-        fpfh_1 = o3d.pipelines.registration.compute_fpfh_feature(surf_1,
-                 o3d.geometry.KDTreeSearchParamHybrid(radius=10, max_nn=20)).data
-        fpfh_1 = fpfh_1.T
-
-        fpfh_2 = o3d.pipelines.registration.compute_fpfh_feature(surf_2,
-                 o3d.geometry.KDTreeSearchParamHybrid(radius=10, max_nn=20)).data
-        fpfh_2 = fpfh_2.T
+        if is_training:
+            feat_1 = np.hstack((normalized_1, self.surface_normals[0]))
+            feat_2 = np.hstack((normalized_2, self.surface_normals[1]))
+            res = [feat_1, feat_2] 
+        else:
+            res = MSG_fpfh().gen_features(pts_R=normalized_1, pts_L=normalized_2, 
+                                          normals_R=self.surface_normals[0], 
+                                          normals_L=self.surface_normals[1])
         
-        idx_1, idx_2 = self.feature_indices(surface_1=surf_1, surface_2=surf_2, anchor_1=anchor_1, anchor_2=anchor_2)
-
-        combined_1, combined_2 = [], []
-        for i in range(len(idx_1)):
-            feat_1 = np.hstack((normalized_1[idx_1[i],:], fpfh_1[idx_1[i],:]))
-            feat_2 = np.hstack((normalized_2[idx_2[i],:], fpfh_2[idx_2[i],:]))
-            combined_1.append(feat_1)
-            combined_2.append(feat_2)
-
-        combined_1 = np.asarray(combined_1).reshape((-1, 36))
-        combined_2 = np.asarray(combined_2).reshape((-1, 36))
-
-        return np.vstack((combined_1, combined_2))
-    
-    @staticmethod
-    def farthest_point_sample(xyz: torch.Tensor, npoint: int) -> torch.Tensor:
-        """
-        Iterative furthest point sampling to select a set of n point features 
-        that have the largest minimum distance.
-
-        Parameters
-        ----------
-        xyz : BxNx3 : obj : 'torch.Tensor'
-            pointcloud data
-        npoint : int
-            number of samples
-        
-        Returns
-        -------
-        centroids : BxM : obj : 'torch.Tensor' 
-            sampled pointcloud index 
-        """
-        device = xyz.device
-        B, N, _ = xyz.shape
-        centroids = torch.zeros(B, npoint, dtype=torch.long).to(device)
-        distance = torch.ones(B, N).to(device) * 1e10
-        farthest = torch.randint(0, N, (B,), dtype=torch.long).to(device)
-        batch_indices = torch.arange(B, dtype=torch.long).to(device)
-        
-        for i in range(npoint):
-            centroids[:, i] = farthest
-            centroid = xyz[batch_indices, farthest, :].view(B, 1, 3)
-            dist = torch.sum((xyz - centroid) ** 2, -1)
-            distance = torch.min(distance, dist)
-            farthest = torch.max(distance, -1)[1]
-
-        return centroids
-    
-    @staticmethod
-    def feature_indices(surface_1, surface_2, anchor_1: list, anchor_2: list) -> list:
-        """
-        Select point indices of contact surfaces that will be used for feature selection.
-
-        Parameters
-        ----------
-        surface_1 : obj : `open3d.geometry.PointCloud`
-            point cloud of a contact surface 1
-        surface_2 : obj : `open3d.geometry.PointCloud`
-            point cloud of a contact surface 2
-        anchor_1 : 1xN : obj : `list`
-            indices of anchor points on a surface 1
-        anchor_2 : 1xN : obj : `list` 
-            indices of anchor points on a surface 2
-        
-        Returns
-        -------
-        feat_idx1 : 1xN : obj : `list` 
-            selected indices on a contact surface 1
-        feat_idx2 : 1xN : obj : `list` 
-            selected indices on a contact surface 2
-        """
-        feat_idx1, feat_idx2 = [], []        
-        surf1_tree = o3d.geometry.KDTreeFlann(surface_1)
-        surf2_tree = o3d.geometry.KDTreeFlann(surface_2)
-
-        for i in range(len(anchor_1)):
-            [_, idx_1, _] = surf1_tree.search_knn_vector_3d(surface_1.points[anchor_1[i]], 20)
-            [_, idx_2, _] = surf2_tree.search_knn_vector_3d(surface_2.points[anchor_2[i]], 20)
-            feat_idx1.append(idx_1)
-            feat_idx2.append(idx_2)
-
-        return feat_idx1, feat_idx2
+        return res
 
 def postprocess(idx: int, anchors: list, q_sample: list, centroids: np.ndarray, CoM: np.ndarray,
-                pts: np.ndarray, normals: np.ndarray, friction_coef : float, mass: float) -> list:
+                pts: np.ndarray, normals: np.ndarray, friction_coef : float, mass: float,
+                is_training: bool = False) -> list:
     """ 
     Postprocess received data to generate input for deep learning algorithm
     
@@ -580,6 +492,8 @@ def postprocess(idx: int, anchors: list, q_sample: list, centroids: np.ndarray, 
         friction coefficient between the gripper and the object
     mass : float
         object mass in kg  
+    is_training : bool
+        whether preprocess the data for training or evaluation
 
     Returns
     -------
@@ -598,7 +512,7 @@ def postprocess(idx: int, anchors: list, q_sample: list, centroids: np.ndarray, 
     metric = GraspMetrics(centroid, contact_p, contact_n, pts, CoM)        
     finger_joint = np.linalg.norm(contact_p[0,:] - centroid)
  
-    res_1 = prep.ML_preprocess(centroid)
+    res_1 = prep.ML_preprocess(centroid, is_training)
     res_2 = [contact_p[0,0], contact_p[0,1], contact_p[0,2], 
              contact_p[1,0], contact_p[1,1], contact_p[1,2]]
     res_3 = metric.Q_combined([finger_joint, finger_joint], prep.surface_normals, 
@@ -608,7 +522,7 @@ def postprocess(idx: int, anchors: list, q_sample: list, centroids: np.ndarray, 
 
 def parse_args(argv = None) -> None:
     parser = argparse.ArgumentParser(description='CPPE')
-    parser.add_argument('--object_path', default='./objects/pcds/4096_obj_05.pcd', type=str,
+    parser.add_argument('--object_path', default='./objects/pcds/4096_obj_02.pcd', type=str,
                         help='path of an object we wish to evaluate.')
     parser.add_argument('--num_pts', default=4096, type=int,
                         help='number of points in the .pcd file.')
@@ -628,6 +542,8 @@ def parse_args(argv = None) -> None:
                         help='value to discretize a full rotation along a rotation vector.')
     parser.add_argument('--threshold', default=20, type=int,
                         help='value to determine whether a gripper collide with an object.')
+    parser.add_argument('--training', default=True, type=bool,
+                        help='whether preprocess the data for training or evaluation.')
 
     global pargs
     pargs = parser.parse_args(argv)
@@ -686,7 +602,8 @@ if __name__ == "__main__":
     ML_sample, grasp_dict, Qs = [], [], []
     for idx in flatten:
         res_1, res_2, res_3 = postprocess(idx, anchors, q_sample, centers, CoM, pts, 
-                                          normals, pargs.friction_coef, pargs.mass)
+                                          normals, pargs.friction_coef, pargs.mass, 
+                                          pargs.training)
         ML_sample.append(res_1)
         grasp_dict.append(res_2)
         Qs.append(res_3)
@@ -723,7 +640,11 @@ if __name__ == "__main__":
 
     print(f'Save associated ML data as .npy format...')
     for num in range(len(ML_sample)):
-        np.save(f'{directory}/{num:04d}_pts.npy', ML_sample[num])
+        if pargs.training:
+            np.save(f'{directory}/{num:04d}R_pts.npy', ML_sample[num][0])
+            np.save(f'{directory}/{num:04d}L_pts.npy', ML_sample[num][1])
+        else:
+            np.save(f'{directory}/{num:04d}_pts.npy', ML_sample[num])
 
     print(f'Save associated misc data as .npy format...')
     for num in range(len(Qs)):

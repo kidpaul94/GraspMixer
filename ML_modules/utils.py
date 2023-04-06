@@ -7,8 +7,9 @@ import open3d as o3d
 from torch.utils.data import Dataset
 
 import transforms as T
+from models import MSG_fpfh
 
-class Simple_Dataset(Dataset):
+class Train_Dataset(Dataset):
     def __init__(self, root_dir: str, csv_file: str, transform = None) -> None:
         self.root_dir = root_dir
         self.annotations = pd.read_csv(f'{root_dir}/{csv_file}')
@@ -21,11 +22,41 @@ class Simple_Dataset(Dataset):
         item = self.annotations.iloc[idx, 0]
         data_path = os.path.join(self.root_dir, item)
         label = self.annotations.iloc[idx, 1]
+        cld_R = np.load(f'{data_path}R_pts.npy')
+        cld_L = np.load(f'{data_path}L_pts.npy')
+        data_misc = np.load(f'{data_path}_misc.npy')
+        data_pts, pin = np.vstack((cld_R, cld_L)), len(cld_R)
+
+        if self.transform is not None:
+            data_pts = self.transform[0](data_pts)
+            data_misc = self.transform[1](data_misc)
+        
+        SR, SL = data_pts[:pin,:3], data_pts[pin:,:3]
+        NR, NL = data_pts[:pin,3:], data_pts[pin:,3:]
+        data_pts = MSG_fpfh().gen_features(pts_R=SR, pts_L=SL, normals_R=NR, normals_L=NL)
+        data_pts, data_misc = self.toTensor(data_pts), self.toTensor(data_misc)
+
+        label = class_type(label=label, num_class=1)
+
+        return (data_pts, data_misc, label, data_path)
+    
+class Val_Dataset(Dataset):
+    def __init__(self, root_dir: str, csv_file: str) -> None:
+        self.root_dir = root_dir
+        self.annotations = pd.read_csv(f'{root_dir}/{csv_file}')
+        self.toTensor = T.ToTensor()
+
+    def __len__(self):
+        return len(self.annotations)
+
+    def __getitem__(self, idx):
+        item = self.annotations.iloc[idx, 0]
+        data_path = os.path.join(self.root_dir, item)
+        label = self.annotations.iloc[idx, 1]
         data_pts = np.load(f'{data_path}_pts.npy')
         data_misc = np.load(f'{data_path}_misc.npy')
 
-        if self.transform is not None:
-            data_pts = self.transform(data_pts)
+        data_pts = self.toTensor(data_pts)
         data_misc = self.toTensor(data_misc)
 
         label = class_type(label=label, num_class=1)
@@ -52,11 +83,11 @@ def gen_csv(root_dir: str) -> None:
             with open(f'{folder.path}/prob.txt') as f:
                 cpps = eval(f.read())
 
-            for i in range(0, len(sort_paths) - 1, 2):
-                if cpps[i // 2] >= 0.0:
+            for i in range(0, len(sort_paths) - 1, 3):
+                if cpps[i // 3] >= 0.0:
                     item = f'{folder.name}/{sort_paths[i][:4]}' 
                     data.append(item)
-                    prob.append(cpps[i // 2])
+                    prob.append(cpps[i // 3])
         else:
             print(f'Not a directory: {folder.name}')
 

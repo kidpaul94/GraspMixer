@@ -4,12 +4,12 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from cosine_annealing_warmup import CosineAnnealingWarmupRestarts
-from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
+from torch.utils.data import DataLoader, WeightedRandomSampler
 
 import transforms as T
 from engine import Engine
 from models import MyModel
-from utils import Simple_Dataset
+from utils import Train_Dataset, Val_Dataset
 
 def parse_args(argv=None) -> None:
     parser = argparse.ArgumentParser(description='CPPE')
@@ -19,10 +19,12 @@ def parse_args(argv=None) -> None:
                         help='path to save a log file.')
     parser.add_argument('--pretrained', default=None, type=str,
                         help='name of pretrained weights, if exists.')
-    parser.add_argument('--dataset_path', default='../dataset/train', type=str,
+    parser.add_argument('--train_path', default='../dataset/train', type=str,
                         help='path to training dataset.')
+    parser.add_argument('--val_path', default='../dataset/val', type=str,
+                        help='path to validation dataset.')
     parser.add_argument('--csv_file', default='summary.csv', type=str,
-                        help='summary file of training dataset.')
+                        help='summary file of training and validation dataset.')
     parser.add_argument('--save_path', default='./weights', type=str,
                         help='Directory for saving checkpoint models.')
     parser.add_argument('--batch_size', default=16, type=int,
@@ -68,12 +70,10 @@ def train(args) -> None:
     print(f'Use {device} for training...')
     device = torch.device(device)
 
-    augmentation = T.Compose([T.RandomRotate(), T.RandomPermute(), T.RandomJitter(), T.ToTensor()])
-    dataset = Simple_Dataset(root_dir=args.dataset_path, csv_file=args.csv_file, 
-                             transform=augmentation)
-    train_size = int(len(dataset) * 0.8)
-    valid_size = len(dataset) - train_size
-    train_set, val_set = random_split(dataset, [train_size, valid_size])
+    augmentation = [T.Compose([T.RandomRotate(), T.RandomPermute(), T.RandomJitter(), 
+                               T.RandomScale()]), T.RandomJitter(is_pts=False)]
+    train_set = Train_Dataset(root_dir=args.train_path, csv_file=args.csv_file, transform=augmentation)       
+    val_set = Val_Dataset(root_dir=args.val_path, csv_file=args.csv_file)
 
     sampler = data_balance(dataset=train_set)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, sampler=sampler)

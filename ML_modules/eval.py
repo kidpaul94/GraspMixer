@@ -3,10 +3,9 @@ import argparse
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-import transforms as T
 from engine import Engine
 from models import MyModel
-from utils import Simple_Dataset
+from utils import Val_Dataset
 
 def parse_args(argv=None) -> None:
     parser = argparse.ArgumentParser(description='CPPE')
@@ -16,6 +15,8 @@ def parse_args(argv=None) -> None:
                         help='name of pretrained weights, if exists.')
     parser.add_argument('--dataset_path', default='./dataset', type=str,
                         help='path to evaluation dataset.')
+    parser.add_argument('--csv_file', default='summary.csv', type=str,
+                        help='summary file of training and validation dataset.')
     parser.add_argument('--batch_size', default=8, type=int,
                         help='batch size to train the NNs.')
 
@@ -27,10 +28,7 @@ def eval(args) -> None:
     print(f'Use {device} for evaluation...')
     device = torch.device(device)
 
-    augmentation = T.Compose([T.ToTensor()])
-    dataset = Simple_Dataset(root_dir=args.dataset_path, csv_file=args.csv_file, 
-                             transform=augmentation)
-
+    dataset = Val_Dataset(root_dir=args.dataset_path, csv_file=args.csv_file)
     eval_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
     model = MyModel().to(device)

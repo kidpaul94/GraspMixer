@@ -131,9 +131,9 @@ class RandomPermute(object):
         return features
 
 class RandomJitter(object):
-    def __init__(self, sigma=0.01, clip=0.05):
-        self.sigma = sigma
-        self.clip = clip
+    def __init__(self, sigma=0.01, clip=0.05, is_pts=True):
+        self.sigma, self.clip = sigma, clip
+        self.is_pts = is_pts
 
     def __call__(self, features):
         """ 
@@ -154,7 +154,12 @@ class RandomJitter(object):
             features with jitters
         """
         assert (self.clip > 0)
-        jitter = np.clip(self.sigma * np.random.randn(features.shape[0], 3), -1 * self.clip, self.clip)
-        features[:,:3] += jitter
-        
+
+        if self.is_pts:
+            jitter = np.clip(self.sigma * np.random.randn(features.shape[0], 3), -1 * self.clip, self.clip)
+            features[:,:3] += jitter
+        else:
+            jitter = np.clip(self.sigma * np.random.randn(2), -1 * self.clip, self.clip)
+            features[6,1:] += jitter
+
         return features
