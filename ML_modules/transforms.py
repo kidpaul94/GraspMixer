@@ -1,5 +1,7 @@
 import torch
 import numpy as np
+import open3d as o3d
+from scipy.spatial.transform import Rotation as R
 
 class Compose(object):
     def __init__(self, transforms):
@@ -11,12 +13,12 @@ class Compose(object):
         
         Parameters
         ----------
-        features : Nx3
+        features : Nx6
             initial input features
             
         Returns
         -------
-        features : Nx3 
+        features : Nx6 
             transformed features
         """
         for t in self.transforms:
@@ -33,12 +35,12 @@ class ToTensor(object):
         
         Parameters
         ----------
-        features : Nx3 : obj : 'numpy.ndarray'
+        features : Nx6 : obj : 'numpy.ndarray'
             initial input features
             
         Returns
         -------
-        features : Nx3 : obj : 'torch.Tensor'
+        features : Nx6 : obj : 'torch.Tensor'
             converted torch.Tensor features
         """
         features = torch.from_numpy(features)
@@ -48,7 +50,7 @@ class ToTensor(object):
         return features
 
 class RandomRotate(object):
-    def __init__(self, angle=[0, 0, 1]):
+    def __init__(self, angle=[1, 1, 1]):
         self.angle = angle
 
     def __call__(self, features):
@@ -59,30 +61,31 @@ class RandomRotate(object):
         ----------
         angle : 1X3 : obj : `list`
             list of paramters to control random rotation in each axis 
-        features : Nx3 : obj : 'numpy.ndarray'
+        features : Nx6 : obj : 'numpy.ndarray'
             initial input features
             
         Returns
         -------
-        features : Nx3 : obj : 'numpy.ndarray'
+        features : Nx6 : obj : 'numpy.ndarray'
             transformed features
         """
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(features[:,:3])
+        pcd.normals = o3d.utility.Vector3dVector(features[:,3:])
+
         angle_x = np.random.uniform(-self.angle[0], self.angle[0]) * np.pi
         angle_y = np.random.uniform(-self.angle[1], self.angle[1]) * np.pi
         angle_z = np.random.uniform(-self.angle[2], self.angle[2]) * np.pi
-        cos_x, sin_x = np.cos(angle_x), np.sin(angle_x)
-        cos_y, sin_y = np.cos(angle_y), np.sin(angle_y)
-        cos_z, sin_z = np.cos(angle_z), np.sin(angle_z)
-        R_x = np.array([[1, 0, 0], [0, cos_x, -sin_x], [0, sin_x, cos_x]])
-        R_y = np.array([[cos_y, 0, sin_y], [0, 1, 0], [-sin_y, 0, cos_y]])
-        R_z = np.array([[cos_z, -sin_z, 0], [sin_z, cos_z, 0], [0, 0, 1]])
-        R = np.dot(R_z, np.dot(R_y, R_x))
-        features[:,:3] = np.dot(features[:,:3], np.transpose(R))
+        RM = R.from_euler('xyz', [angle_x, angle_y, angle_z]).as_matrix()
+        pcd.rotate(R=RM, center=(0, 0, 0))
+
+        features[:,:3] = np.asarray(pcd.points)
+        features[:,3:] = np.asarray(pcd.normals)
 
         return features
     
 class RandomScale(object):
-    def __init__(self, scale=[0.9, 1.1], anisotropic=False):
+    def __init__(self, scale=[0.97, 1.03], anisotropic=False):
         self.scale = scale
         self.anisotropic = anisotropic
 
@@ -96,12 +99,12 @@ class RandomScale(object):
             min & max  scaling factors
         anisotropic : bool
             whether equally scale an input in every dimension
-        features : Nx3 : obj : 'numpy.ndarray'
+        features : Nx6 : obj : 'numpy.ndarray'
             initial input features
             
         Returns
         -------
-        features : Nx3 : obj : 'numpy.ndarray'
+        features : Nx6 : obj : 'numpy.ndarray'
             transformed features
         """
         scale = np.random.uniform(self.scale[0], self.scale[1], 3 if self.anisotropic else 1)
@@ -118,12 +121,12 @@ class RandomPermute(object):
         
         Parameters
         ----------
-        features : Nx3 : obj : 'numpy.ndarray'
+        features : Nx6 : obj : 'numpy.ndarray'
             initial input features
             
         Returns
         -------
-        features : Nx3 : obj : 'numpy.ndarray'
+        features : Nx6 : obj : 'numpy.ndarray'
             transformed features
         """
         features = features[np.random.permutation(features.shape[0]), :]
@@ -131,7 +134,7 @@ class RandomPermute(object):
         return features
 
 class RandomJitter(object):
-    def __init__(self, sigma=0.01, clip=0.05, is_pts=True):
+    def __init__(self, sigma=0.04, clip=0.07, is_pts=True):
         self.sigma, self.clip = sigma, clip
         self.is_pts = is_pts
 
@@ -145,12 +148,12 @@ class RandomJitter(object):
             standard deviation of a sampling distribution
         clip : float
             cliping value of randomly generated jitters
-        features : Nx3 : obj : 'numpy.ndarray'
+        features : Nx6 : obj : 'numpy.ndarray'
             initial input features
             
         Returns
         -------
-        features : Nx3 : obj : 'numpy.ndarray'
+        features : Nx6 : obj : 'numpy.ndarray'
             features with jitters
         """
         assert (self.clip > 0)

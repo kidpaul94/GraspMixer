@@ -1,5 +1,6 @@
 import torch
 import argparse
+import pandas as pd
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
@@ -13,7 +14,7 @@ def parse_args(argv=None) -> None:
                         help='use CUDA to evaluate model.')
     parser.add_argument('--pretrained', default=None, type=str,
                         help='name of pretrained weights, if exists.')
-    parser.add_argument('--dataset_path', default='./dataset', type=str,
+    parser.add_argument('--dataset_path', default='../dataset/test', type=str,
                         help='path to evaluation dataset.')
     parser.add_argument('--csv_file', default='summary.csv', type=str,
                         help='summary file of training and validation dataset.')
@@ -33,8 +34,8 @@ def eval(args) -> None:
 
     model = MyModel().to(device)
     if args.pretrained is not None:
-        state_dict = torch.load(f'./weights/{args.pretrained}.pth', map_location='cpu')
-        model.load_state_dict(state_dict)
+        checkpoint = torch.load(f'./weights/{args.pretrained}.pth', map_location='cpu')
+        model.load_state_dict(checkpoint['model_state_dict'])
         print(f'Load model from {args.pretrained}.pth')
     else:
         print('Pretrained weights not provided!!!')
@@ -43,13 +44,14 @@ def eval(args) -> None:
     criterion = nn.BCEWithLogitsLoss()
     trainer = Engine(model=model, loaders=eval_loader, criterion=criterion, device=device)  
 
-    _, acc, f1 = trainer.validate()    
+    _, acc, prec, rec, f1 = trainer.validate()    
 
     print('------------------------------------------------')
-    print(f'Acc: {acc:0.4f} | F1 score: {f1:0.4f}')
-    print('------------------------------------------------')    
+    print(f'Acc: {acc:0.4f} | Prec: {prec:0.4f} | Rec: {rec:0.4f} | F1 score: {f1:0.4f}')
+    print('------------------------------------------------')
 
     print('Finished evaluation!!!')    
 
 if __name__ == "__main__":
     parse_args()
+    eval(args)

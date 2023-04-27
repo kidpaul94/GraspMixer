@@ -94,7 +94,7 @@ class MSG_fpfh():
         
         Returns
         -------
-        res : 105 : obj : `numpy.ndarray` 
+        res : Nx105 : obj : `numpy.ndarray` 
             generated MSG_fpfh features
         """
         temp_1 = torch.from_numpy(pts_R).unsqueeze_(0)
@@ -111,18 +111,18 @@ class MSG_fpfh():
         surf_2.normals = o3d.utility.Vector3dVector(normals_L)
 
         fpfh_11 = o3d.pipelines.registration.compute_fpfh_feature(surf_1,
-                  o3d.geometry.KDTreeSearchParamRadius(radius=5)).data.T
+                  o3d.geometry.KDTreeSearchParamRadius(radius=0.1)).data.T
         fpfh_12 = o3d.pipelines.registration.compute_fpfh_feature(surf_1,
-                  o3d.geometry.KDTreeSearchParamRadius(radius=10)).data.T
+                  o3d.geometry.KDTreeSearchParamRadius(radius=0.25)).data.T
         fpfh_13 = o3d.pipelines.registration.compute_fpfh_feature(surf_1,
-                  o3d.geometry.KDTreeSearchParamRadius(radius=20)).data.T
+                  o3d.geometry.KDTreeSearchParamRadius(radius=0.5)).data.T
 
         fpfh_21 = o3d.pipelines.registration.compute_fpfh_feature(surf_2,
-                  o3d.geometry.KDTreeSearchParamRadius(radius=5)).data.T
+                  o3d.geometry.KDTreeSearchParamRadius(radius=0.1)).data.T
         fpfh_22 = o3d.pipelines.registration.compute_fpfh_feature(surf_2,
-                  o3d.geometry.KDTreeSearchParamRadius(radius=10)).data.T
+                  o3d.geometry.KDTreeSearchParamRadius(radius=0.25)).data.T
         fpfh_23 = o3d.pipelines.registration.compute_fpfh_feature(surf_2,
-                  o3d.geometry.KDTreeSearchParamRadius(radius=20)).data.T
+                  o3d.geometry.KDTreeSearchParamRadius(radius=0.5)).data.T
         
         idx_1, idx_2 = self.feature_indices(surface_1=surf_1, surface_2=surf_2, anchor_1=anchor_1, anchor_2=anchor_2)
 
@@ -213,7 +213,7 @@ class MyModel(nn.Module):
     def __init__(self):
         super(MyModel, self).__init__()
         self.llg = LLGBlock(dim=3, embed_dim=105)
-        self.mixer = SimpleMixer(dim=105, num_patch=807, embed_dim=256, depth=4, token_dim=128, channel_dim=1024,
+        self.mixer = SimpleMixer(dim=105, num_patch=807, embed_dim=256, depth=3, token_dim=256, channel_dim=512,
                                  dropout=0.1, num_classes=1)
 
     def forward(self, x):

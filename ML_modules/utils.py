@@ -63,7 +63,7 @@ class Val_Dataset(Dataset):
 
         return (data_pts, data_misc, label, data_path)
 
-def gen_csv(root_dir: str) -> None:
+def gen_csv(root_dir: str, is_training: bool = True) -> None:
     """ 
     Generate summary of the dataset in .csv format.
     
@@ -71,23 +71,26 @@ def gen_csv(root_dir: str) -> None:
     ----------
     root_dir : str
         root directory of the dataset
+    is_training : bool
+        whether generate a .csv for training or validation set
         
     Returns
     -------
     None
     """
     data, prob = [], []
+    space = 3 if is_training else 2
     for folder in os.scandir(root_dir):
         if folder.is_dir():
             sort_paths = sorted(os.listdir(folder.path))
             with open(f'{folder.path}/prob.txt') as f:
                 cpps = eval(f.read())
 
-            for i in range(0, len(sort_paths) - 1, 3):
-                if cpps[i // 3] >= 0.0:
+            for i in range(0, len(sort_paths) - 1, space):
+                if cpps[i // space] >= 0.0:
                     item = f'{folder.name}/{sort_paths[i][:4]}' 
                     data.append(item)
-                    prob.append(cpps[i // 3])
+                    prob.append(cpps[i // space])
         else:
             print(f'Not a directory: {folder.name}')
 
@@ -95,7 +98,7 @@ def gen_csv(root_dir: str) -> None:
     df = pd.DataFrame(list_dict) 
     df.to_csv(f'{root_dir}/summary.csv', index=False)
 
-def class_type(label: float, num_class: int = 10, threshold: float = 0.6):
+def class_type(label: float, num_class: int = 3, threshold: float = 0.85):
     """ 
     Adjust label format depending on a classification type.
     
@@ -114,7 +117,12 @@ def class_type(label: float, num_class: int = 10, threshold: float = 0.6):
     """
     assert num_class > 0, '# of classes has to be larger than 1'
     if num_class > 1:
-        temp = int(round(label, 1) * 10) - 1
+        if label < 0.4:
+            temp = 0 # Futile
+        elif label >= 0.6:
+            temp = 2 # Robust
+        else:
+            temp = 1 # Fragile
         label = torch.LongTensor([temp])
     else:
         label = 1.0 if label > threshold else 0.0
