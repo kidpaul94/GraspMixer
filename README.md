@@ -63,12 +63,18 @@ Contact point pair estimator (CPPE) for 6DOF grasp detection. The framework take
 ### Quality Estimation:
 
 > **Note**
-`traib.py` receives several different arguments. Run the `--help` command to see everything it receives.
-
+`train.py` receives several different arguments. Run the `--help` command to see everything it receives.
+    
     cd ML_modules/
     python3 train.py --help
 
+> **Note**
+`eval.py` receives several different arguments. Run the `--help` command to see everything it receives.
+    
+    cd ML_modules/
+    python3 eval.py --help
+
 ## ToDo Lists
 
-| **Work on ML pipeline** | ![Progress](https://progress-bar.dev/65) |
+| **Work on ML pipeline** | ![Progress](https://progress-bar.dev/100) |
 | --- | --- |
