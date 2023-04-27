@@ -93,7 +93,7 @@ class GraspMetrics():
         """
         distance = np.linalg.norm(self.centroid - self.CoM)
 
-        return distance * 0.001
+        return 1 - distance / self.max_d
 
     def QC1(self):
         """ 
