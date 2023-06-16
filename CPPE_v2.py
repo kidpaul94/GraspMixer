@@ -500,9 +500,9 @@ def postprocess(idx: int, anchors: list, q_sample: list, centroids: np.ndarray, 
     res_1 : Nx6 : obj : `numpy.ndarray`
         input data of deep learning algorithm
     res_2 : 1xN : obj : `list`
-        xyz values of contact points and associated grasp metrics
+        xyz values of contact points 
     res_3 : Mx3 : obj : `numpy.ndarray`
-        list of all information related to the current grasp
+        list of all information related to the current grasp including grasp metrics
     """
     contact_p = pts[anchors[idx]]
     contact_n = normals[anchors[idx]]
