@@ -17,6 +17,8 @@ joint_lims : 1xN : obj : `list`
     joint limits of each gripper finger
 max_width : float
     maximum width between gripper fingers
+body_side : float
+    side length (mm) of a gripper body
 """
 
 params = {
@@ -27,4 +29,5 @@ params = {
     'gripper_force': 100.,
     'joint_lims' : [0., 28.5],
     'max_width' : 57.,
+    'body_side' : 70.,
     }
