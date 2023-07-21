@@ -199,6 +199,14 @@ class Gripper():
             vector = vector / params['finger_dims'][0] 
 
             finger_1, finger_2, collision_t = self.finger_model(gripper, collision, vector, switch)
+            box_pts = np.asarray(collision_t.get_box_points())
+            body_side = (box_pts[3] - box_pts[0]) / np.linalg.norm(box_pts[3] - box_pts[0]) * params['body_side']
+            box_pts[3] = box_pts[0] + body_side
+            box_pts[6] = box_pts[1] + body_side
+            box_pts[5] = box_pts[2] + body_side
+            box_pts[4] = box_pts[7] + body_side
+            edge_pts = o3d.utility.Vector3dVector(box_pts)
+            collision_t = o3d.geometry.OrientedBoundingBox.create_from_points(points=edge_pts)
             ext_1 = collision_t.get_point_indices_within_bounding_box(self.pcd.points)
             ext_2 = finger_1.get_point_indices_within_bounding_box(self.pcd.points)
             ext_3 = finger_2.get_point_indices_within_bounding_box(self.pcd.points)
