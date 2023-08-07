@@ -2,7 +2,7 @@
 <img src=./images/logo.png width=40% height=40%>
 </p>
 
-# CPPE
+# GraspMixer
 
 Contact Surface Pair Estimator (CSPE) for offline 6DOF grasp detection. The framework takes a complete object point cloud file to generate possible contact point pairs and their robustness (a.k.a grasp dictionaries) for a parallel jaw gripper using both analytical and data-driven models.
 
