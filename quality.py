@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.spatial import ConvexHull, distance
 
-from CPPE_utils import get_sides
+from CSPE_utils import get_sides
 from gripper_config import params
 
 class GraspMetrics():

@@ -2,7 +2,6 @@ import os
 import time
 import math
 import copy
-import torch
 import argparse
 import numpy as np
 import open3d as o3d
@@ -12,7 +11,7 @@ from multiprocessing import Process, Lock, Manager
 from quality import GraspMetrics
 from gripper_config import params
 from ML_modules.models import MSG_fpfh
-from CPPE_utils import rot_matrix, unpacking, OtherCS
+from CSPE_utils import rot_matrix, unpacking, OtherCS
 
 class Gripper():
     def __init__(self, p1: np.ndarray, p2: np.ndarray, p2_p1: np.ndarray, dist: np.float64, pcd = None) -> None:

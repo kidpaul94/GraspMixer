@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import open3d as o3d
 
-from CPPE_utils import gen_pointcloud, Visualization
+from CSPE_utils import gen_pointcloud, Visualization
 
 def parse_args(argv=None) -> None:
     parser = argparse.ArgumentParser(description='CPPE')
