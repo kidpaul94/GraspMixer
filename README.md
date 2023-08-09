@@ -18,6 +18,10 @@ The project was done while [Hojun Lee](https://www.linkedin.com/in/hjunlee94/) w
     - [CSPE_v2](#cspe_v2)
     - [Extra Processing](#extra-processing)
     - [Quality Estimation (ML)](#quality-estimation)
+- [Dataset Preparation](#dataset-preparation)
+    - [Structure](#structure)
+    - [Label Generation](#label-generation)
+    - [Summary Table](#summary-table)
 - [ToDo Lists](#todo-lists)
 
 ---
@@ -80,6 +84,39 @@ The project was done while [Hojun Lee](https://www.linkedin.com/in/hjunlee94/) w
     
     cd ML_modules/
     python3 eval.py --help
+
+## Dataset Generation
+
+### Structure:
+
+    └── dataset
+        ├── train         
+        |   ├── obj_01              # obj_01 grasp folder
+        |   |   ├── 0000_misc_1.npy
+        |   |   ├── 0000_misc_2.npy
+        |   |   ├── 0000R_pts.npy
+        |   |   ├── 0000L_pts.npy  
+        |   |   └── prob.txt        
+        |   ├── obj_02              # obj_02 grasp folder
+        |   ├── obj_03              # obj_03 grasp folder
+        |   └── summary.csv         # summary of file_paths & labels
+        └── test          
+        |   ├── obj_04              # obj_04 grasp folder
+        |   |   ├── 0000_misc_1.npy
+        |   |   ├── 0000_misc_2.npy
+        |   |   └── 0000_pts.npy
+        |   |   └── prob.txt           
+        |   ├── obj_05              # obj_05 grasp folder
+        |   ├── obj_06              # obj_06 grasp folder
+        |   └── summary.csv         # summary of file_paths & labels
+
+### Label Generation:
+
+We use a [Gazebo simulation](https://github.com/kidpaul94/grasp-factory) to generate labels for each object. If you have your own simulation or a physical robot, you can use them as well. 
+
+### Summary Table:
+
+Once you clean up your training, testing samples, and their labels in the dataset folder, you can use [gen_csv](https://github.com/kidpaul94/GraspMixer/blob/00111ee931b5104e9e17908ef8151cdeea55d8f6/ML_modules/utils.py#L76) in `util.py` to generate summary.csv
 
 ## ToDo Lists
 
