@@ -28,6 +28,7 @@ The project was done while [Hojun Lee](https://www.linkedin.com/in/hjunlee94/) w
     │   ├── engine.py
     │   ├── eval.py
     │   ├── model.py      
+    │   ├── quality.py
     │   ├── train.py     
     │   ├── transforms.py 
     │   └── utils.py    
@@ -41,8 +42,7 @@ The project was done while [Hojun Lee](https://www.linkedin.com/in/hjunlee94/) w
     ├── CSPE_utils.py     
     ├── CSPE_v2.py        
     ├── gripper_config.py 
-    ├── helper.py 
-    └── quality.py        
+    └── helper.py     
 
 ## Download Process
 
