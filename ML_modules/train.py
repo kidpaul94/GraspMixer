@@ -71,7 +71,7 @@ def train(args) -> None:
     device = torch.device(device)
 
     augmentation = [T.Compose([T.RandomRotate(), T.RandomPermute(), T.RandomScale()]), 
-                    T.RandomJitter(is_pts=False)]
+                    T.RandomJitter()]
     train_set = Train_Dataset(root_dir=args.train_path, csv_file=args.csv_file, transform=augmentation)       
     val_set = Train_Dataset(root_dir=args.val_path, csv_file=args.csv_file)
     # dataset = Train_Dataset(root_dir=args.train_path, csv_file=args.csv_file, 

@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 
 import transforms as T
 from models import MSG_fpfh
+from quality import GraspMetrics
 
 class Train_Dataset(Dataset):
     def __init__(self, root_dir: str, csv_file: str, transform = None) -> None:
@@ -24,8 +25,13 @@ class Train_Dataset(Dataset):
         label = self.annotations.iloc[idx, 1]
         cld_R = np.load(f'{data_path}R_pts.npy')
         cld_L = np.load(f'{data_path}L_pts.npy')
-        data_misc = np.load(f'{data_path}_misc.npy')
         data_pts, pin = np.vstack((cld_R, cld_L)), len(cld_R)
+
+        misc_1 = np.load(f'{data_path}_misc_1.npy')
+        misc_2 = np.load(f'{data_path}_misc_2.npy', allow_pickle=True)
+        metric = GraspMetrics(misc_1[1], misc_1[2:4], misc_1[4:6], misc_1[7:], misc_1[6])  
+        data_misc = metric.Q_combined([misc_1[0,0], misc_1[0,0]], misc_2, 
+                                      misc_1[0,1], misc_1[0,2])
 
         if self.transform is not None:
             data_pts = self.transform[0](data_pts)
@@ -54,7 +60,11 @@ class Val_Dataset(Dataset):
         data_path = os.path.join(self.root_dir, item)
         label = self.annotations.iloc[idx, 1]
         data_pts = np.load(f'{data_path}_pts.npy')
-        data_misc = np.load(f'{data_path}_misc.npy')
+        misc_1 = np.load(f'{data_path}_misc_1.npy')
+        misc_2 = np.load(f'{data_path}_misc_2.npy', allow_pickle=True)
+        metric = GraspMetrics(misc_1[1], misc_1[2:4], misc_1[4:6], misc_1[7:], misc_1[6])  
+        data_misc = metric.Q_combined([misc_1[0,0], misc_1[0,0]], misc_2, 
+                                      misc_1[0,1], misc_1[0,2])
 
         data_pts = self.toTensor(data_pts)
         data_misc = self.toTensor(data_misc)

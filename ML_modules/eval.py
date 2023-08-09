@@ -1,6 +1,5 @@
 import torch
 import argparse
-import pandas as pd
 import torch.nn as nn
 from torch.utils.data import DataLoader
 

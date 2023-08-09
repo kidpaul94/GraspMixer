@@ -8,7 +8,6 @@ import open3d as o3d
 from scipy.spatial.transform import Rotation as R
 from multiprocessing import Process, Lock, Manager
 
-from quality import GraspMetrics
 from gripper_config import params
 from ML_modules.models import MSG_fpfh
 from CSPE_utils import rot_matrix, unpacking, OtherCS
@@ -513,7 +512,7 @@ def postprocess(idx: int, anchors: list, q_sample: list, centroids: np.ndarray, 
         input data of deep learning algorithm
     res_2 : 1xN : obj : `list`
         xyz values of contact points 
-    res_3 : Mx3 : obj : `numpy.ndarray`
+    res_3 : 1x2 : obj : `list`
         list of all information related to the current grasp including grasp metrics
     """
     contact_p = pts[anchors[idx]]
@@ -521,14 +520,14 @@ def postprocess(idx: int, anchors: list, q_sample: list, centroids: np.ndarray, 
     centroid = centroids[idx]
 
     prep = Preprocess(contact_p, pts[q_sample[idx],:], normals[q_sample[idx],:])        
-    metric = GraspMetrics(centroid, contact_p, contact_n, pts, CoM)        
-    finger_joint = np.linalg.norm(contact_p[0,:] - centroid)
- 
     res_1 = prep.ML_preprocess(centroid, is_training)
     res_2 = [contact_p[0,0], contact_p[0,1], contact_p[0,2], 
              contact_p[1,0], contact_p[1,1], contact_p[1,2]]
-    res_3 = metric.Q_combined([finger_joint, finger_joint], prep.surface_normals, 
-                               friction_coef, mass)
+    
+    finger_joint = np.linalg.norm(contact_p[0,:] - centroid)
+    ffm = np.array([finger_joint, friction_coef, mass])
+    stacked_feat = np.vstack((ffm, centroid, contact_p, contact_n, CoM, pts))
+    res_3 = [stacked_feat, prep.surface_normals]
 
     return res_1, res_2, res_3
 
@@ -611,14 +610,16 @@ if __name__ == "__main__":
     print(f'Start calculating grasp metrics...')
     start = time.time()
 
-    ML_sample, grasp_dict, Qs = [], [], []
+    ML_sample, grasp_dict = [], []
+    misc_1, misc_2 = [], []
     for idx in flatten:
         res_1, res_2, res_3 = postprocess(idx, anchors, q_sample, centers, CoM, pts, 
                                           normals, pargs.friction_coef, pargs.mass, 
                                           pargs.training)
         ML_sample.append(res_1)
         grasp_dict.append(res_2)
-        Qs.append(res_3)
+        misc_1.append(res_3[0])
+        misc_2.append(res_3[1])
     
     approach_vectors = []
     for cpp in grasp_dict:
@@ -659,5 +660,6 @@ if __name__ == "__main__":
             np.save(f'{directory}/{num:04d}_pts.npy', ML_sample[num])
 
     print(f'Save associated misc data as .npy format...')
-    for num in range(len(Qs)):
-        np.save(f'{directory}/{num:04d}_misc.npy', Qs[num])
+    for num in range(len(misc_1)):
+        np.save(f'{directory}/{num:04d}_misc_1.npy', misc_1[num])
+        np.save(f'{directory}/{num:04d}_misc_2.npy', np.array(misc_2[num],dtype=object), allow_pickle=True)
