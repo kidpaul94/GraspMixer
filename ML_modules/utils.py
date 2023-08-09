@@ -29,13 +29,13 @@ class Train_Dataset(Dataset):
 
         misc_1 = np.load(f'{data_path}_misc_1.npy')
         misc_2 = np.load(f'{data_path}_misc_2.npy', allow_pickle=True)
-        metric = GraspMetrics(misc_1[1], misc_1[2:4], misc_1[4:6], misc_1[7:], misc_1[6])  
-        data_misc = metric.Q_combined([misc_1[0,0], misc_1[0,0]], misc_2, 
-                                      misc_1[0,1], misc_1[0,2])
 
         if self.transform is not None:
             data_pts = self.transform[0](data_pts)
-            data_misc = self.transform[1](data_misc)
+            misc_1 = self.transform[1](misc_1)
+        metric = GraspMetrics(misc_1[1], misc_1[2:4], misc_1[4:6], misc_1[7:], misc_1[6]) 
+        data_misc = metric.Q_combined([misc_1[0,0], misc_1[0,0]], misc_2, 
+                                      misc_1[0,1], misc_1[0,2])
         
         SR, SL = data_pts[:pin,:3], data_pts[pin:,:3]
         NR, NL = data_pts[:pin,3:], data_pts[pin:,3:]

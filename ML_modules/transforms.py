@@ -50,7 +50,7 @@ class ToTensor(object):
         return features
 
 class RandomRotate(object):
-    def __init__(self, angle=[1, 1, 1]):
+    def __init__(self, angle: list = [1, 1, 1]):
         self.angle = angle
 
     def __call__(self, features):
@@ -85,7 +85,7 @@ class RandomRotate(object):
         return features
     
 class RandomScale(object):
-    def __init__(self, scale=[0.97, 1.03], anisotropic=False):
+    def __init__(self, scale: list = [0.97, 1.03], anisotropic: bool = False):
         self.scale = scale
         self.anisotropic = anisotropic
 
@@ -134,8 +134,9 @@ class RandomPermute(object):
         return features
 
 class RandomJitter(object):
-    def __init__(self, sigma=0.04, clip=0.07):
+    def __init__(self, sigma: list = [0.04], clip: list = [0.07], is_pts: bool = True):
         self.sigma, self.clip = sigma, clip
+        self.is_pts = is_pts
 
     def __call__(self, features):
         """ 
@@ -143,9 +144,9 @@ class RandomJitter(object):
         
         Parameters
         ----------
-        sigma : float
+        sigma : 1xN : obj : 'list'
             standard deviation of a sampling distribution
-        clip : float
+        clip : 1xN : obj : 'list'
             cliping value of randomly generated jitters
         features : Nx6 : obj : 'numpy.ndarray'
             initial input features
@@ -155,9 +156,19 @@ class RandomJitter(object):
         features : Nx6 : obj : 'numpy.ndarray'
             features with jitters
         """
-        assert (self.clip > 0)
-
-        jitter = np.clip(self.sigma * np.random.randn(features.shape[0], 3), -1 * self.clip, self.clip)
-        features[:,:3] += jitter
+        if self.is_pts:
+            assert (self.clip[0] > 0)
+            jitter = np.clip(self.sigma[0] * np.random.randn(features.shape[0], 3), -1 * self.clip[0], self.clip[0])
+            features[:,:3] += jitter
+        else:
+            assert (len(self.clip[0]) == 6)
+            for i in range(3):
+                jitter = np.clip(self.sigma[i] * np.random.randn(features.shape[0], 1), -1 * self.clip[i], self.clip[i])
+                features[0,i] += jitter
+            for j in range(2):
+                jitter = np.clip(self.sigma[3] * np.random.randn(features.shape[0], 3), -1 * self.clip[3], self.clip[3])
+                features[j+4,:3] += jitter        
+            jitter = np.clip(self.sigma[4] * np.random.randn(features.shape[0], 3), -1 * self.clip[4], self.clip[4])
+            features[6,:3] += jitter        
 
         return features
