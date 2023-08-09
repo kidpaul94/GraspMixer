@@ -89,7 +89,7 @@ def gen_csv(root_dir: str, is_training: bool = True) -> None:
     None
     """
     data, prob = [], []
-    space = 3 if is_training else 2
+    space = 4 if is_training else 3
     for folder in os.scandir(root_dir):
         if folder.is_dir():
             sort_paths = sorted(os.listdir(folder.path))

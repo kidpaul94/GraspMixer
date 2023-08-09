@@ -1,7 +1,16 @@
+import os
+import sys
+import inspect
 import torch
 import numpy as np
 import open3d as o3d
 from scipy.spatial.transform import Rotation as R
+
+current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
+
+from gripper_config import params
 
 class Compose(object):
     def __init__(self, transforms):
@@ -161,13 +170,17 @@ class RandomJitter(object):
             jitter = np.clip(self.sigma[0] * np.random.randn(features.shape[0], 3), -1 * self.clip[0], self.clip[0])
             features[:,:3] += jitter
         else:
-            assert (len(self.clip[0]) == 6)
+            assert (len(self.clip[0]) == 5)
             for i in range(3):
                 jitter = np.clip(self.sigma[i] * np.random.randn(features.shape[0], 1), -1 * self.clip[i], self.clip[i])
                 features[0,i] += jitter
+
             for j in range(2):
-                jitter = np.clip(self.sigma[3] * np.random.randn(features.shape[0], 3), -1 * self.clip[3], self.clip[3])
-                features[j+4,:3] += jitter        
+                multi = np.clip(self.sigma[3] * np.random.randn(features.shape[0], 1), -1 * self.clip[3], self.clip[3])
+                jitter = np.random.rand(3)
+                features[j+4,:3] = params['gripper_force'] * features[j+4,:3] + multi * jitter / np.linalg.norm(jitter)
+                features[j+4,:3] = features[j+4,:3] / np.linalg.norm(features[j+4,:3])
+  
             jitter = np.clip(self.sigma[4] * np.random.randn(features.shape[0], 3), -1 * self.clip[4], self.clip[4])
             features[6,:3] += jitter        
 
