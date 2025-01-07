@@ -70,7 +70,7 @@ The project was done while [Hojun Lee](https://www.linkedin.com/in/hjunlee94/) w
 
 ### Extra Processing:
 
-> **Note**
+> [!NOTE]
 `helper.py` receives several different arguments to convert a CAD model to a point cloud or visualize grasp configurations. Run the `--help` command to see everything it receives.
 
     python3 helper.py --help
