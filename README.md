@@ -63,7 +63,7 @@ The project was done while [Hojun Lee](https://www.linkedin.com/in/hjunlee94/) w
 
 ### CPPE_v2:
 
-> **Note**
+> [!NOTE]
 `CSPE_v2.py` receives several different arguments. Run the `--help` command to see everything it receives.
 
     python3 CSPE_v2.py --help
@@ -77,13 +77,13 @@ The project was done while [Hojun Lee](https://www.linkedin.com/in/hjunlee94/) w
 
 ### Quality Estimation:
 
-> **Note**
+> [!NOTE]
 `train.py` receives several different arguments. Run the `--help` command to see everything it receives.
     
     cd ML_modules/
     python3 train.py --help
 
-> **Note**
+> [!NOTE]
 `eval.py` receives several different arguments. Run the `--help` command to see everything it receives.
     
     cd ML_modules/
