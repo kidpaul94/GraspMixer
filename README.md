@@ -124,6 +124,6 @@ Once you clean up your training, testing samples, and their labels in the datase
 
 ## ToDo Lists
 
-| **ML pipeline** | ![Progress](https://progress-bar.dev/100) |
+| **ML pipeline** | ![Progress](https://geps.dev/progress/100) |
 | --- | --- |
-| **Documentation** | ![Progress](https://progress-bar.dev/50) |
+| **Documentation** | ![Progress](https://geps.dev/progress/50) |
