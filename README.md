@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Combination of Contact Surface Pair Estimator (CSPE) and Grasp Quality Mapping Network (GQM-Net) for offline 6DOF grasp detection. The framework takes a complete object point cloud file to generate possible contact surface pairs and their robustness (a.k.a grasp dictionaries) for a parallel jaw gripper using both analytical and data-driven models.
+GraspMixer ([T-ASE](https://ieeexplore.ieee.org/abstract/document/10843724)) is a combination of Contact Surface Pair Estimator (CSPE) and Grasp Quality Mapping Network (GQM-Net) for offline 6DOF grasp detection. The framework takes a complete object point cloud file to generate possible contact surface pairs and their robustness (a.k.a grasp dictionaries) for a parallel jaw gripper using both analytical and data-driven models.
 
 ![Example 0](./images/pipeline.png)
 
@@ -26,6 +26,7 @@ The project was done while [Hojun Lee](https://www.linkedin.com/in/hjunlee94/) w
     - [Structure](#structure)
     - [Sample Generation](#sample-generation)
     - [Summary Table](#summary-table)
+- [Citation](#citation)
 - [ToDo Lists](#todo-lists)
 
 ---
@@ -121,6 +122,19 @@ For each object, we use a [Gazebo simulation](https://github.com/kidpaul94/grasp
 ### Summary Table:
 
 Once you clean up your training, testing samples, and their labels in the dataset folder, you can use [gen_csv](https://github.com/kidpaul94/GraspMixer/blob/00111ee931b5104e9e17908ef8151cdeea55d8f6/ML_modules/utils.py#L76) in `util.py` to generate summary.csv
+
+## Citation
+If you found GraspMixer useful in your research, please consider citing:
+
+```plain
+@article{lee2025graspmixer,
+  title={GraspMixer: Hybrid of Contact Surface Sampling and Grasp Feature Mixing for Grasp Synthesis},
+  author={Lee, Hojun and Toner, Tyler and Tilbury, Dawn M and Barton, Kira},
+  journal={IEEE Transactions on Automation Science and Engineering},
+  year={2025},
+  publisher={IEEE}
+}
+```
 
 ## ToDo Lists
 
